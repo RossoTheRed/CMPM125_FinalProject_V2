@@ -1,0 +1,201 @@
+using System;
+using System.Collections;
+using System.ComponentModel;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+// Thanks Brackeys
+// [link](https://www.youtube.com/watch?v=_QajrabyTJc&list=PLPV2KyIb3jR6Wxj8HaJ_pZhBtaamtXL7J)
+
+[RequireComponent(typeof(CharacterController))]
+public class PlayerController : MonoBehaviour
+{
+    Rigidbody myRB;
+    CharacterController myChar;
+
+    InputAction moveKeys;
+    InputAction crouchKey;
+    InputAction jumpKey;
+    InputAction sprintKey;
+
+    [Header("State", order = 1)]
+    [SerializeField] bool isCrouching = false;
+    [SerializeField] bool isGrounded = true;
+    [SerializeField] bool isSprinting = false;
+
+    [Header("Movement", order = 1)]
+    [SerializeField] float baseMoveSpeed = 10;
+    [SerializeField] float sprintSpeedMod = 1.5f;
+
+    [Header("Crouching", order=2)]
+    [SerializeField] float crouchSpeedMod = 0.70f;
+    [SerializeField] float crouchHeightMod = 0.7f;
+    float BASEHEIGHT;
+
+    [Header("Jumping", order = 2)]
+    [SerializeField] float jumpPower = 6;
+    [SerializeField] float gravity = -9.81f;
+    Vector3 verticalVelocity = new Vector3(0f, 0f, 0f);
+    [SerializeField] float weight = 80f;
+
+    [Header("Debug Tools", order = 1)]
+    [SerializeField] bool Debug_logInputs = false;
+    [SerializeField] bool Debug_constantCalls = false;
+    [SerializeField] bool Debug_logVelocity = false;
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        BASEHEIGHT = transform.localScale.y;
+
+        myChar = this.GetComponent<CharacterController>();
+
+        moveKeys = InputSystem.actions.FindAction("Move", true);
+        crouchKey = InputSystem.actions.FindAction("Crouch", true);
+        jumpKey = InputSystem.actions.FindAction("Jump", true);
+        sprintKey = InputSystem.actions.FindAction("Sprint", true);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        Debug_CallInputs(Debug_constantCalls);
+        Debug_LogVelocity();
+    }
+    void FixedUpdate()
+    {
+        CheckGrounded();
+
+        Move();
+        Jump();
+        Crouch();
+        Sprint();
+
+    }
+
+    void Move()
+    {
+        if (moveKeys.IsPressed() == true)
+        {
+            Vector2 inputValue = moveKeys.ReadValue<Vector2>(); // [0] Sideways value | [1] Forward value
+
+            float moveSpeed = GetMoveSpeed();
+
+            myChar.Move(transform.forward * moveSpeed * inputValue[1]);
+            myChar.Move(transform.right * moveSpeed * inputValue[0]);
+        }
+    }
+
+    float GetMoveSpeed()
+    {
+        float moveSpeed = baseMoveSpeed / 10;
+        if (isSprinting == true)
+        {
+            moveSpeed *= sprintSpeedMod;
+        }
+        else if (isCrouching == true)
+        {
+            moveSpeed *= crouchSpeedMod;
+        }
+
+        return(moveSpeed);
+    }
+
+    void Jump()
+    {
+        if (jumpKey.WasPressedThisFrame() && isGrounded == true && isCrouching == false)
+        {
+            verticalVelocity[1] = Mathf.Sqrt(jumpPower * -2 * gravity);
+        }
+
+        CheckGravity();
+
+        myChar.Move(verticalVelocity * Time.deltaTime);
+    }
+
+    void CheckGravity()
+    {
+        if (isGrounded == false)
+        {
+            verticalVelocity[1] += gravity * weight * Time.deltaTime;
+        }
+    }
+
+    void Crouch()
+    { //Later add switchable setting for toggle/hold crouch
+        if (crouchKey.IsPressed() && isCrouching == false && isSprinting == false)
+        {
+            isCrouching = true;
+            myChar.height = crouchHeightMod;
+            ChangeHeight(transform.localScale.y * crouchHeightMod);
+        } else if (crouchKey.IsPressed() == false && isCrouching == true)
+        {
+            isCrouching = false;
+            myChar.height = 1;
+            ChangeHeight(BASEHEIGHT);
+        }
+    }
+
+    void ChangeHeight(float newHeight)
+    {
+        transform.localScale = new Vector3(transform.localScale.x, newHeight, transform.localScale.z);
+    }
+
+    void Sprint()
+    { // Add toggleable sprint later too
+        if (sprintKey.IsPressed() == true && isSprinting == false)
+        {
+            isCrouching = false;
+            ChangeHeight(BASEHEIGHT);
+            isSprinting = true;
+        } else if (sprintKey.IsPressed() == false && isSprinting == true)
+        {
+            isSprinting = false;
+        }
+    }
+
+    void CheckGrounded()
+    {
+        float rayLength = 0.1f;
+        Vector3 rayOrigin = new Vector3(transform.position.x, transform.position.y - transform.localScale.y/2, transform.position.z);
+        Ray ray = new Ray(rayOrigin, transform.up * -1);
+
+        Debug.DrawRay(rayOrigin, transform.up * -1 * rayLength, Color.green);
+
+        if (Physics.Raycast(ray, rayLength, LayerMask.GetMask("Ground")) == true)
+        {
+            isGrounded = true;
+            verticalVelocity[1] = 0f;
+        } else
+        {
+            isGrounded = false;
+        }
+    }
+
+    void Debug_CallInputs(bool constant)
+    {
+        if (Debug_logInputs == false) { return; }
+
+        if (constant == true)
+        {
+            Debug.Log($"moveKeys: {moveKeys.ReadValue<Vector2>()}");
+            Debug.Log($"jumpKey: {jumpKey.IsPressed()}");
+            Debug.Log($"crouchKey: {crouchKey.IsPressed()}");
+            Debug.Log($"sprintKey: {sprintKey.IsPressed()}");
+        } else
+        {
+            if (moveKeys.IsPressed()) { Debug.Log($"moveKeys: {moveKeys.ReadValue<Vector2>()}"); }
+            if (jumpKey.IsPressed()) { Debug.Log($"jumpKey: {jumpKey.IsPressed()}"); }
+            if (crouchKey.IsPressed() ) { Debug.Log($"crouchKey: {crouchKey.IsPressed()}"); }
+            if (sprintKey.IsPressed()) { Debug.Log($"sprintKey: {sprintKey.IsPressed()}"); }
+        }
+    }
+
+    void Debug_LogVelocity()
+    {
+        if (Debug_logVelocity == false) { return; }
+
+        // Debug.Log($"Linear Velocity: {myRB.linearVelocity}\nAngular Velocity: {myRB.angularVelocity}");
+        Debug.Log($"velocity: {verticalVelocity}");
+    }
+}
