@@ -5,10 +5,23 @@ using UnityEngine.InputSystem;
 // Thanks Brackeys
 // [link](https://www.youtube.com/watch?v=_QajrabyTJc&list=PLPV2KyIb3jR6Wxj8HaJ_pZhBtaamtXL7J)
 
+
+/* To do:
+    [Bug] Player stays crouched when falling
+    [Bug] Player can't climb stairs properly
+    [Bug] Player can jump up steep ramp when they shouldn't be able to
+*/
+
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
-{
-    Rigidbody myRB;
+{ 
+    enum MovementState
+    {
+        Normal,
+        Crouching,
+        Sprinting,
+    }
+
     CharacterController myChar;
 
     InputAction moveKeys;
@@ -17,16 +30,17 @@ public class PlayerController : MonoBehaviour
     InputAction sprintKey;
 
     [Header("State", order = 1)]
-    [SerializeField] bool isCrouching = false;
+    [SerializeField] MovementState movementState;
 
     [SerializeField] BoxCollider groundChecker;
     ObjectCheck groundCheckScript;
+    [Tooltip("Is the player on the ground? Read only!")]
     public bool isGrounded = true;
+    [Tooltip("The object that checks for overhead obstructions. Gets resized when crouching.")]
     [SerializeField] BoxCollider ceilingChecker;
     ObjectCheck ceilingCheckScript;
+    [Tooltip("Is the player blocked from above? Read only!")]
     public bool isCramped = false;
-    
-    [SerializeField] bool isSprinting = false;
 
     [Header("Movement", order = 1)]
     [SerializeField] float baseMoveSpeed = 10;
@@ -42,11 +56,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float gravity = -9.81f;
     Vector3 verticalVelocity = new Vector3(0f, 0f, 0f);
     [SerializeField] float weight = 80f;
-
-    [Header("Debug Tools", order = 1)]
-    [SerializeField] bool Debug_logInputs = false;
-    [SerializeField] bool Debug_constantCalls = false;
-    [SerializeField] bool Debug_logVelocity = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -85,18 +94,11 @@ public class PlayerController : MonoBehaviour
         Jump();
         Crouch();
         Sprint();
-
-        Debug_CallInputs(Debug_constantCalls);
-        Debug_LogVelocity();
     }
-    // void FixedUpdate()
-    // {
-
-    // }
 
     void Move()
     {
-        if (moveKeys.IsPressed() == true)
+        if (moveKeys.IsPressed())
         {
             Vector2 inputValue = moveKeys.ReadValue<Vector2>(); // [0] Sideways value | [1] Forward value
 
@@ -110,11 +112,11 @@ public class PlayerController : MonoBehaviour
     float GetMoveSpeed()
     {
         float moveSpeed = baseMoveSpeed / 10;
-        if (isSprinting == true)
+        if (IsSprinting())
         {
             moveSpeed *= sprintSpeedMod;
         }
-        else if (isCrouching == true)
+        else if (IsCrouching())
         {
             moveSpeed *= crouchSpeedMod;
         }
@@ -124,7 +126,7 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
-        if (jumpKey.WasPressedThisFrame() && isGrounded == true && isCrouching == false)
+        if (jumpKey.WasPressedThisFrame() && isGrounded && IsCrouching() == false)
         {
             verticalVelocity[1] = Mathf.Sqrt(jumpPower * -2 * gravity);
         }
@@ -152,37 +154,37 @@ public class PlayerController : MonoBehaviour
 
     void Crouch()
     { //Later add switchable setting for toggle/hold crouch
-        if (crouchKey.IsPressed() && isCrouching == false && isSprinting == false)
+        // Later make it so crouch deactivates in the air
+        if (crouchKey.IsPressed() && IsCrouching() == false && IsSprinting() == false && isGrounded)
         {
-            isCrouching = true;
+            ChangeMoveState("crouching");
             myChar.height = crouchHeightMod;
             ChangeHeight(transform.localScale.y * crouchHeightMod);
-        } else if (crouchKey.IsPressed() == false && isCrouching == true && isCramped == false)
+        } else if (crouchKey.IsPressed() == false && IsCrouching() && isCramped == false)
         {
-            isCrouching = false;
+            ChangeMoveState("normal");
             myChar.height = 1;
             ChangeHeight(BASEHEIGHT);
         }
     }
 
-    void ChangeHeight(float newHeight)
-    {
-        transform.localScale = new Vector3(transform.localScale.x, newHeight, transform.localScale.z);
-
-        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
-    }
-
     void Sprint()
     { // Add toggleable sprint later too
-        if (sprintKey.IsPressed() == true && isSprinting == false)
+        if (sprintKey.IsPressed() && IsSprinting() == false)
         {
-            isCrouching = false;
             ChangeHeight(BASEHEIGHT);
-            isSprinting = true;
-        } else if (sprintKey.IsPressed() == false && isSprinting == true)
+            ChangeMoveState("sprinting");
+        } else if (sprintKey.IsPressed() == false && IsSprinting())
         {
-            isSprinting = false;
+            ChangeMoveState("normal");
         }
+    }
+
+    void ChangeHeight(float newHeight)
+    {
+        transform.localScale = new Vector3(transform.localScale.x, newHeight, transform.localScale.z); // Placeholder until we have a player with animations
+
+        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
     }
 
     void CheckGrounded()
@@ -195,11 +197,49 @@ public class PlayerController : MonoBehaviour
         isCramped = ceilingCheckScript.IsBlocked();
     }
 
-    void Debug_CallInputs(bool constant)
+    void ChangeMoveState(string newState)
     {
-        if (Debug_logInputs == false) { return; }
+        Debug.Log($"newState: {newState.ToLower()}");
 
-        if (constant == true)
+        switch(newState.ToLower())
+        {
+            case("sprinting"):
+                movementState = MovementState.Sprinting;
+                break;
+            case ("sprint"):
+                movementState = MovementState.Sprinting;
+                break;
+
+            case ("crouching"):
+                movementState = MovementState.Crouching;
+                break;
+            case ("crouch"):
+                movementState = MovementState.Crouching;
+                break;
+
+            case ("normal"):
+                movementState = MovementState.Normal;
+                break;
+
+            default:
+                Debug.LogError($"\"{newState}\" is not a valid state for player movement!");
+                break;
+        }
+    }
+
+    bool IsSprinting()
+    {
+        return(movementState == MovementState.Sprinting);
+    }
+
+    bool IsCrouching()
+    {
+        return(movementState == MovementState.Crouching);
+    }
+
+    void Debug_CallInputs(bool constantReport)
+    {
+        if (constantReport == true)
         {
             Debug.Log($"moveKeys: {moveKeys.ReadValue<Vector2>()}");
             Debug.Log($"jumpKey: {jumpKey.IsPressed()}");
@@ -216,8 +256,6 @@ public class PlayerController : MonoBehaviour
 
     void Debug_LogVelocity()
     {
-        if (Debug_logVelocity == false) { return; }
-
         // Debug.Log($"Linear Velocity: {myRB.linearVelocity}\nAngular Velocity: {myRB.angularVelocity}");
         Debug.Log($"velocity: {verticalVelocity}");
     }
