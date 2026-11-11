@@ -1,6 +1,4 @@
-using System;
-using System.Collections;
-using System.ComponentModel;
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -20,7 +18,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("State", order = 1)]
     [SerializeField] bool isCrouching = false;
-    [SerializeField] bool isGrounded = true;
+
+    [SerializeField] BoxCollider groundChecker;
+    ObjectCheck groundCheckScript;
+    public bool isGrounded = true;
+    [SerializeField] BoxCollider ceilingChecker;
+    ObjectCheck ceilingCheckScript;
+    public bool isCramped = false;
+    
     [SerializeField] bool isSprinting = false;
 
     [Header("Movement", order = 1)]
@@ -50,6 +55,20 @@ public class PlayerController : MonoBehaviour
 
         myChar = this.GetComponent<CharacterController>();
 
+        groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();
+        if (groundCheckScript == null)
+        {
+            groundChecker.gameObject.AddComponent<ObjectCheck>();
+            groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();
+        }
+
+        ceilingCheckScript = ceilingChecker.gameObject.GetComponent<ObjectCheck>();
+        if (ceilingCheckScript == null)
+        {
+            ceilingChecker.gameObject.AddComponent<ObjectCheck>();
+            ceilingCheckScript = ceilingChecker.gameObject.GetComponent<ObjectCheck>();
+        }
+
         moveKeys = InputSystem.actions.FindAction("Move", true);
         crouchKey = InputSystem.actions.FindAction("Crouch", true);
         jumpKey = InputSystem.actions.FindAction("Jump", true);
@@ -59,19 +78,21 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug_CallInputs(Debug_constantCalls);
-        Debug_LogVelocity();
-    }
-    void FixedUpdate()
-    {
         CheckGrounded();
+        CheckHeadBlocked();
 
         Move();
         Jump();
         Crouch();
         Sprint();
 
+        Debug_CallInputs(Debug_constantCalls);
+        Debug_LogVelocity();
     }
+    // void FixedUpdate()
+    // {
+
+    // }
 
     void Move()
     {
@@ -108,6 +129,11 @@ public class PlayerController : MonoBehaviour
             verticalVelocity[1] = Mathf.Sqrt(jumpPower * -2 * gravity);
         }
 
+        if (isCramped && verticalVelocity.y > 0)
+        {
+            verticalVelocity = Vector3.zero;
+        }
+
         CheckGravity();
 
         myChar.Move(verticalVelocity * Time.deltaTime);
@@ -118,6 +144,9 @@ public class PlayerController : MonoBehaviour
         if (isGrounded == false)
         {
             verticalVelocity[1] += gravity * weight * Time.deltaTime;
+        } else if (verticalVelocity.y < 0)
+        {
+            verticalVelocity = Vector3.zero;
         }
     }
 
@@ -128,7 +157,7 @@ public class PlayerController : MonoBehaviour
             isCrouching = true;
             myChar.height = crouchHeightMod;
             ChangeHeight(transform.localScale.y * crouchHeightMod);
-        } else if (crouchKey.IsPressed() == false && isCrouching == true)
+        } else if (crouchKey.IsPressed() == false && isCrouching == true && isCramped == false)
         {
             isCrouching = false;
             myChar.height = 1;
@@ -139,6 +168,8 @@ public class PlayerController : MonoBehaviour
     void ChangeHeight(float newHeight)
     {
         transform.localScale = new Vector3(transform.localScale.x, newHeight, transform.localScale.z);
+
+        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
     }
 
     void Sprint()
@@ -156,20 +187,12 @@ public class PlayerController : MonoBehaviour
 
     void CheckGrounded()
     {
-        float rayLength = 0.1f;
-        Vector3 rayOrigin = new Vector3(transform.position.x, transform.position.y - transform.localScale.y/2, transform.position.z);
-        Ray ray = new Ray(rayOrigin, transform.up * -1);
+        isGrounded = groundCheckScript.IsBlocked();
+    }
 
-        Debug.DrawRay(rayOrigin, transform.up * -1 * rayLength, Color.green);
-
-        if (Physics.Raycast(ray, rayLength, LayerMask.GetMask("Ground")) == true)
-        {
-            isGrounded = true;
-            verticalVelocity[1] = 0f;
-        } else
-        {
-            isGrounded = false;
-        }
+    void CheckHeadBlocked()
+    {
+        isCramped = ceilingCheckScript.IsBlocked();
     }
 
     void Debug_CallInputs(bool constant)
