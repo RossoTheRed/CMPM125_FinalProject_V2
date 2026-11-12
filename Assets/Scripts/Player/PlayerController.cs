@@ -49,7 +49,7 @@ public class PlayerController : MonoBehaviour
     [Header("Crouching", order=2)]
     [SerializeField] float crouchSpeedMod = 0.70f;
     [SerializeField] float crouchHeightMod = 0.7f;
-    float BASEHEIGHT;
+    float baseHeight;
 
     [Header("Jumping", order = 2)]
     [SerializeField] float jumpPower = 6;
@@ -60,7 +60,7 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        BASEHEIGHT = transform.localScale.y;
+        baseHeight = transform.localScale.y;
 
         myChar = this.GetComponent<CharacterController>();
 
@@ -164,7 +164,7 @@ public class PlayerController : MonoBehaviour
         {
             ChangeMoveState("normal");
             myChar.height = 1;
-            ChangeHeight(BASEHEIGHT);
+            ChangeHeight(baseHeight);
         }
     }
 
@@ -172,7 +172,7 @@ public class PlayerController : MonoBehaviour
     { // Add toggleable sprint later too
         if (sprintKey.IsPressed() && IsSprinting() == false)
         {
-            ChangeHeight(BASEHEIGHT);
+            ChangeHeight(baseHeight);
             ChangeMoveState("sprinting");
         } else if (sprintKey.IsPressed() == false && IsSprinting())
         {
@@ -182,7 +182,7 @@ public class PlayerController : MonoBehaviour
 
     void ChangeHeight(float newHeight)
     {
-        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
+        ceilingChecker.size = new Vector3(1, 0.1f + (baseHeight - newHeight), 1);
     }
 
     void CheckGrounded()
