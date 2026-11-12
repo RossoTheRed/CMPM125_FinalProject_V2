@@ -8,14 +8,14 @@ using UnityEngine.InputSystem;
 
 /* To do:
     [Bug] Player stays crouched when falling
-    [Bug] Player can't climb stairs properly
     [Bug] Player can jump up steep ramp when they shouldn't be able to
+    [Feature] Sprinting should consume stamina
 */
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 { 
-    enum MovementState
+    public enum MovementState 
     {
         Normal,
         Crouching,
@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour
     InputAction sprintKey;
 
     [Header("State", order = 1)]
-    [SerializeField] MovementState movementState;
+    public MovementState movementState;
 
     [SerializeField] BoxCollider groundChecker;
     ObjectCheck groundCheckScript;
@@ -182,8 +182,6 @@ public class PlayerController : MonoBehaviour
 
     void ChangeHeight(float newHeight)
     {
-        transform.localScale = new Vector3(transform.localScale.x, newHeight, transform.localScale.z); // Placeholder until we have a player with animations
-
         ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
     }
 
