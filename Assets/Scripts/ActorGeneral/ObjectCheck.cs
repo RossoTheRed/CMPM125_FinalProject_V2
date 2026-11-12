@@ -25,17 +25,15 @@ public class ObjectCheck : MonoBehaviour
         {
             blocked = false;
         }
-        Debug.Log($"Hit continued {hit.transform.name}");
     }
 
     void OnTriggerExit(Collider hit)
+    {
+        if (hit.gameObject.layer == LayerMask.NameToLayer(layerToCheck))
         {
-            if (hit.gameObject.layer == LayerMask.NameToLayer(layerToCheck))
-            {
-                blocked = false;
-            }
-            Debug.Log($"Hit exitted {hit.transform.name}");
+            blocked = false;
         }
+    }
 
     public bool IsBlocked()
     {

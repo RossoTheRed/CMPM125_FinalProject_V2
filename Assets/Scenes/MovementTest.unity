@@ -343,6 +343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a496d113120096f4e9f465bf6a35dfd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  layerToCheck: Ground
 --- !u!65 &168175550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -362,7 +363,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 0.1, z: 1}
+  m_Size: {x: 0.8, y: 0.1, z: 0.8}
   m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!1 &203844586
 GameObject:
@@ -3653,7 +3654,7 @@ GameObject:
   - component: {fileID: 1061283782}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3675,9 +3676,9 @@ MonoBehaviour:
   isGrounded: 1
   ceilingChecker: {fileID: 168175550}
   isCramped: 0
-  baseMoveSpeed: 1
-  sprintSpeedMod: 2
-  crouchSpeedMod: 0.6
+  baseMoveSpeed: 2
+  sprintSpeedMod: 1.5
+  crouchSpeedMod: 0.5
   crouchHeightMod: 0.7
   jumpPower: 1
   gravity: -9.81
@@ -3757,7 +3758,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.5
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.35
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
@@ -3773,10 +3774,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a18f56e4019e7942b0c80694e913e09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaminaController
-  maxStamina: 100
+  baseMaxStamina: 100
   minMaxStamina: 5
-  maximumLossDelay: 10
-  maximumLoss: 5
+  degradationSpeed: 30
+  degradationAmount: 10
+  regenDelay: 10
+  regenAmount: 5
+  doRegen: 0
 --- !u!95 &1061283781
 Animator:
   serializedVersion: 7
@@ -5152,6 +5156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a496d113120096f4e9f465bf6a35dfd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  layerToCheck: Ground
 --- !u!65 &1538327438
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5171,7 +5176,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 0.1, z: 1}
+  m_Size: {x: 0.8, y: 0.1, z: 0.8}
   m_Center: {x: 0, y: -0.5, z: 0}
 --- !u!1 &1582042853
 GameObject:

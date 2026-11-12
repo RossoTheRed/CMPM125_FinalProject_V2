@@ -13,6 +13,7 @@ using UnityEngine.InputSystem;
 */
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(StaminaController))]
 public class PlayerController : MonoBehaviour
 { 
     public enum MovementState 
@@ -22,7 +23,10 @@ public class PlayerController : MonoBehaviour
         Sprinting,
     }
 
-    CharacterController myChar;
+    CharacterController charController;
+    StaminaController stamController;
+
+    TimeKeeperScript tk;
 
     InputAction moveKeys;
     InputAction crouchKey;
@@ -44,9 +48,13 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement", order = 1)]
     [SerializeField] float baseMoveSpeed = 10;
-    [SerializeField] float sprintSpeedMod = 1.5f;
 
-    [Header("Crouching", order=2)]
+    [Header("Sprinting", order = 2)]
+    [SerializeField] float sprintSpeedMod = 1.5f;
+    float sprintStaminaCost = 0.25f;
+    private TimeKeeperScript.Countdown sprintCounter;
+
+    [Header("Crouching", order = 2)]
     [SerializeField] float crouchSpeedMod = 0.70f;
     [SerializeField] float crouchHeightMod = 0.7f;
     float baseHeight;
@@ -62,7 +70,11 @@ public class PlayerController : MonoBehaviour
     {
         baseHeight = transform.localScale.y;
 
-        myChar = this.GetComponent<CharacterController>();
+        charController = this.GetComponent<CharacterController>();
+        tk = TimeKeeperScript.Instance;
+
+        stamController = this.GetComponent<StaminaController>();
+        sprintCounter = tk.CreateCountdown("sprintCounter", 0.25f, false);
 
         groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();
         if (groundCheckScript == null)
@@ -104,8 +116,8 @@ public class PlayerController : MonoBehaviour
 
             float moveSpeed = GetMoveSpeed();
 
-            myChar.Move(transform.forward * moveSpeed * inputValue[1]);
-            myChar.Move(transform.right * moveSpeed * inputValue[0]);
+            charController.Move(transform.forward * moveSpeed * inputValue[1]);
+            charController.Move(transform.right * moveSpeed * inputValue[0]);
         }
     }
 
@@ -138,7 +150,7 @@ public class PlayerController : MonoBehaviour
 
         CheckGravity();
 
-        myChar.Move(verticalVelocity * Time.deltaTime);
+        charController.Move(verticalVelocity * Time.deltaTime);
     }
 
     void CheckGravity()
@@ -158,25 +170,44 @@ public class PlayerController : MonoBehaviour
         if (crouchKey.IsPressed() && IsCrouching() == false && IsSprinting() == false && isGrounded)
         {
             ChangeMoveState("crouching");
-            myChar.height = crouchHeightMod;
+            charController.height = crouchHeightMod;
             ChangeHeight(transform.localScale.y * crouchHeightMod);
         } else if (crouchKey.IsPressed() == false && IsCrouching() && isCramped == false)
         {
             ChangeMoveState("normal");
-            myChar.height = 1;
+            charController.height = 1;
             ChangeHeight(baseHeight);
         }
     }
 
     void Sprint()
     { // Add toggleable sprint later too
-        if (sprintKey.IsPressed() && IsSprinting() == false)
+        if (sprintKey.IsPressed() && IsSprinting() == false && stamController.HaveStamina(sprintStaminaCost))
         {
             ChangeHeight(baseHeight);
             ChangeMoveState("sprinting");
-        } else if (sprintKey.IsPressed() == false && IsSprinting())
+            stamController.DelayRegen();
+        } else if (IsSprinting() && (sprintKey.IsPressed() == false || stamController.HaveStamina(sprintStaminaCost) == false))
         {
             ChangeMoveState("normal");
+            stamController.ResumeRegen();
+        }
+
+        if (IsSprinting())
+        {
+            if (sprintCounter.IsActive() == false)
+            {
+                sprintCounter.Reset();
+                sprintCounter.Start();
+
+                stamController.Expend(sprintStaminaCost);
+            }
+
+            sprintCounter.Count(Time.deltaTime);
+        } else if (sprintCounter.IsActive())
+        {
+            sprintCounter.Pause();
+            sprintCounter.Reset();
         }
     }
 
