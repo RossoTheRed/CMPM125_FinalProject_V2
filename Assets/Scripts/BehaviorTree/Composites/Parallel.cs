@@ -13,7 +13,7 @@ public class Parallel : Composite
         m_eFailurePolicy = failure;
     }
 
-    protected override void OnInitialize()
+    public override void OnInitialize()
     {
         foreach (var child in m_Children)
         {

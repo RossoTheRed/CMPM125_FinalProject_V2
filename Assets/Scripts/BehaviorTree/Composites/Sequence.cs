@@ -1,7 +1,7 @@
 class Sequence : Composite
 {
     protected int m_CurrentChild;
-    protected override void OnInitialize() => m_CurrentChild = 0;
+    public override void OnInitialize() => m_CurrentChild = 0;
 
     protected override Status Update()
     {

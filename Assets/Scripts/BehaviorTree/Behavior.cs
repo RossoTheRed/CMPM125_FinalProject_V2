@@ -19,7 +19,8 @@ public abstract class Behavior
 
     ~Behavior() {}
 
-    protected virtual void OnInitialize() {}
+    // currently this is public, might need to be protected only
+    public virtual void OnInitialize() {}
     // maybe make this an abstract class, or make a dedicated leaf class
     protected abstract Status Update();
     protected virtual void FixedUpdate() {}

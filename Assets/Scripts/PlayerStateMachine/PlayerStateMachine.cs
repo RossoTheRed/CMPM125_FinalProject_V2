@@ -37,7 +37,7 @@ public class PlayerStateMachine : StateMachine
         );
         TransitionState(StateId.Idle); // initial state
 
-        hp = new Hittable(maxHealth, Hittable.Team.ENEMY, this.gameObject);
+        hp = new Hittable(maxHealth, Hittable.Team.PLAYER, this.gameObject);
 
         hp.OnDeath += OnDeath;
     }
