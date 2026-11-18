@@ -7,7 +7,7 @@ public enum Status
     BH_ABORTED,
 };
     
-public class Behavior
+public abstract class Behavior
 {
     // maybe make this read only
     private Status m_eStatus;
@@ -19,11 +19,11 @@ public class Behavior
 
     ~Behavior() {}
 
-    public virtual void OnInitialize() {}
+    protected virtual void OnInitialize() {}
     // maybe make this an abstract class, or make a dedicated leaf class
-    public virtual Status Update() {return m_eStatus;}
+    protected abstract Status Update();
     protected virtual void FixedUpdate() {}
-    public virtual void OnTerminate(Status status) {}
+    protected virtual void OnTerminate(Status status) {}
 
     public Status Tick()
     {
@@ -39,6 +39,11 @@ public class Behavior
         {
             FixedUpdate();
         }
+    }
+
+    public Status GetStatus()
+    {
+        return m_eStatus;
     }
 
 }
