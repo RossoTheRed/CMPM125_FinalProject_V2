@@ -13,6 +13,7 @@ public class Repeat : Decorator
         {
             m_pChild.Tick();
             if (m_pChild.GetStatus() == Status.BH_RUNNING) return Status.BH_RUNNING;
+            // NOTE: not confident on this addition I added - chris
             if (m_pChild.GetStatus() == Status.BH_INVALID) return Status.BH_INVALID;
 
             if (m_pChild.GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;

@@ -24,6 +24,11 @@ public abstract class Behavior
     protected abstract Status Update();
     protected virtual void FixedUpdate() {}
     protected virtual void OnTerminate(Status status) {}
+    public virtual void Abort()
+    {
+        OnTerminate(Status.BH_ABORTED);
+        m_eStatus = Status.BH_INVALID;
+    }
 
     public Status Tick()
     {
@@ -41,9 +46,25 @@ public abstract class Behavior
         }
     }
 
+    public void Reset()
+    {
+        m_eStatus = Status.BH_INVALID;
+        OnInitialize();
+    }
+
     public Status GetStatus()
     {
         return m_eStatus;
+    }
+
+    public bool IsTerminated()
+    {
+        return m_eStatus == Status.BH_SUCCESS || m_eStatus == Status.BH_FAILURE;
+    }
+
+    public bool IsRunning()
+    {
+        return m_eStatus == Status.BH_RUNNING;
     }
 
 }
