@@ -34,7 +34,8 @@ public class PlayerController : MonoBehaviour
     InputAction sprintKey;
 
     [Header("State", order = 1)]
-    public MovementState movementState;
+    [SerializeField] MovementState movementState;
+    [SerializeField] PlayerStateMachine stateMachine;
 
     [SerializeField] BoxCollider groundChecker;
     ObjectCheck groundCheckScript;
@@ -47,7 +48,7 @@ public class PlayerController : MonoBehaviour
     public bool isCramped = false;
 
     [Header("Movement", order = 1)]
-    [SerializeField] float baseMoveSpeed = 10;
+    [SerializeField] float moveSpeed;
 
     [Header("Sprinting", order = 2)]
     [SerializeField] float sprintSpeedMod = 1.5f;
@@ -57,7 +58,7 @@ public class PlayerController : MonoBehaviour
     [Header("Crouching", order = 2)]
     [SerializeField] float crouchSpeedMod = 0.70f;
     [SerializeField] float crouchHeightMod = 0.7f;
-    float baseHeight;
+    float BASEHEIGHT;
 
     [Header("Jumping", order = 2)]
     [SerializeField] float jumpPower = 6;
@@ -68,13 +69,12 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        baseHeight = transform.localScale.y;
+        stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
 
-        charController = this.GetComponent<CharacterController>();
         tk = TimeKeeperScript.Instance;
 
-        stamController = this.GetComponent<StaminaController>();
-        sprintCounter = tk.CreateCountdown("sprintCounter", 0.25f, false);
+        charController = this.GetComponent<CharacterController>();
+        BASEHEIGHT = charController.height;
 
         groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();
         if (groundCheckScript == null)
@@ -113,27 +113,9 @@ public class PlayerController : MonoBehaviour
         if (moveKeys.IsPressed())
         {
             Vector2 inputValue = moveKeys.ReadValue<Vector2>(); // [0] Sideways value | [1] Forward value
-
-            float moveSpeed = GetMoveSpeed();
-
             charController.Move(transform.forward * moveSpeed * inputValue[1]);
             charController.Move(transform.right * moveSpeed * inputValue[0]);
         }
-    }
-
-    float GetMoveSpeed()
-    {
-        float moveSpeed = baseMoveSpeed / 10;
-        if (IsSprinting())
-        {
-            moveSpeed *= sprintSpeedMod;
-        }
-        else if (IsCrouching())
-        {
-            moveSpeed *= crouchSpeedMod;
-        }
-
-        return(moveSpeed);
     }
 
     void Jump()
@@ -167,53 +149,70 @@ public class PlayerController : MonoBehaviour
     void Crouch()
     { //Later add switchable setting for toggle/hold crouch
         // Later make it so crouch deactivates in the air
-        if (crouchKey.IsPressed() && IsCrouching() == false && IsSprinting() == false && isGrounded)
+        // if (crouchKey.IsPressed() && IsCrouching() == false && IsSprinting() == false && isGrounded)
+        // {
+        //     ChangeMoveState("crouching");
+        //     charController.height = crouchHeightMod;
+        //     ChangeHeight(transform.localScale.y * crouchHeightMod);
+        // } else if (crouchKey.IsPressed() == false && IsCrouching() && isCramped == false)
+        // {
+        //     ChangeMoveState("normal");
+        //     charController.height = 1;
+        //     ChangeHeight(BASEHEIGHT);
+        // }
+
+        if (crouchKey.WasPressedThisFrame())
         {
-            ChangeMoveState("crouching");
-            charController.height = crouchHeightMod;
-            ChangeHeight(transform.localScale.y * crouchHeightMod);
-        } else if (crouchKey.IsPressed() == false && IsCrouching() && isCramped == false)
+            stateMachine.TransitionState(PlayerStateMachine.StateId.Sneak);
+            ChangeHeight(stateMachine.height);
+            ChangeSpeed(stateMachine.moveSpeed/100);
+        }
+
+        if (crouchKey.IsPressed() == false && isCramped == false)
         {
-            ChangeMoveState("normal");
-            charController.height = 1;
-            ChangeHeight(baseHeight);
+            stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
+            ChangeHeight(stateMachine.height);
+            ChangeSpeed(stateMachine.moveSpeed/100);
         }
     }
 
     void Sprint()
     { // Add toggleable sprint later too
-        if (sprintKey.IsPressed() && IsSprinting() == false && stamController.HaveStamina(sprintStaminaCost))
+        // if (sprintKey.IsPressed() && IsSprinting() == false)
+        // {
+        //     ChangeHeight(BASEHEIGHT);
+        //     ChangeMoveState("sprinting");
+        // } else if (sprintKey.IsPressed() == false && IsSprinting())
+        // {
+        //     ChangeMoveState("normal");
+        // }
+
+        if (sprintKey.WasPressedThisFrame())
         {
-            ChangeHeight(baseHeight);
-            ChangeMoveState("sprinting");
-            stamController.DelayRegen();
-        } else if (IsSprinting() && (sprintKey.IsPressed() == false || stamController.HaveStamina(sprintStaminaCost) == false))
-        {
-            ChangeMoveState("normal");
-            stamController.ResumeRegen();
+            stateMachine.TransitionState(PlayerStateMachine.StateId.Sprint);
+            ChangeHeight(stateMachine.height);
+            ChangeSpeed(stateMachine.moveSpeed / 100);
         }
 
-        if (IsSprinting())
+        if (sprintKey.WasReleasedThisFrame())
         {
-            if (sprintCounter.IsActive() == false)
-            {
-                sprintCounter.Reset();
-                sprintCounter.Start();
-
-                stamController.Expend(sprintStaminaCost);
-            }
-
-            sprintCounter.Count(Time.deltaTime);
-        } else if (sprintCounter.IsActive())
-        {
-            sprintCounter.Pause();
-            sprintCounter.Reset();
+            stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
+            ChangeHeight(stateMachine.height);
+            ChangeSpeed(stateMachine.moveSpeed / 100);
         }
     }
 
-    void ChangeHeight(float newHeight)
+    public void ChangeHeight(float newHeight)
     {
-        ceilingChecker.size = new Vector3(1, 0.1f + (baseHeight - newHeight), 1);
+        transform.localScale = new Vector3(transform.localScale.x, newHeight * 2, transform.localScale.z); // Placeholder until we have a player with animations
+        charController.height = newHeight;
+
+        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
+    }
+
+    public void ChangeSpeed(float newSpeed)
+    {
+        moveSpeed = newSpeed;
     }
 
     void CheckGrounded()

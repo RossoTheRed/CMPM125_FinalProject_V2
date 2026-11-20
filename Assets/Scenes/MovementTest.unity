@@ -3672,6 +3672,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   movementState: 0
+  stateMachine: {fileID: 1061283781}
   groundChecker: {fileID: 1538327438}
   isGrounded: 1
   ceilingChecker: {fileID: 168175550}
@@ -3774,6 +3775,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a18f56e4019e7942b0c80694e913e09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaminaController
+--- !u!114 &1061283781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1061283772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edf0109039b9ae54d8a77256d9a9181d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMachine
+  playerCamera: {fileID: 961739749}
+  fighterActionMap:
+    m_Name: Fighter
+    m_Id: bfe59292-ca76-4b41-8960-a27fb88d591a
+    m_Asset: {fileID: 0}
+    m_Actions: []
+    m_Bindings: []
+  movePlaneAction:
+    m_Name: Move Plane
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 6bea35e8-7281-4b8e-9134-db21ed8a3cb7
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+    m_Priority: 0
+  _maxHealth: 10
   baseMaxStamina: 100
   minMaxStamina: 5
   degradationSpeed: 30
@@ -3781,28 +3812,6 @@ MonoBehaviour:
   regenDelay: 10
   regenAmount: 5
   doRegen: 0
---- !u!95 &1061283781
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1061283772}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 12e77c6f0c14bb041ba8ac0d3717e746, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &1061283782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3816,7 +3825,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimator
   controller: {fileID: 1061283773}
-  animator: {fileID: 1061283781}
   currState: 0
 --- !u!43 &1264280423
 Mesh:
