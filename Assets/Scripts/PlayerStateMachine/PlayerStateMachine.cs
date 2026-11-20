@@ -9,12 +9,10 @@ public class PlayerStateMachine : StateMachine
     [SerializeField] private GameObject playerCamera;
     [SerializeField] private PlayerController _playerController;
     public PlayerController playerController {get { return(_playerController); }}
-
-    public InputActionMap fighterActionMap;
-    // Movement Input Actions
-    public InputAction movePlaneAction; // Note: Might be bad idea to set value here - chris
-    [SerializeField] PlayerInputChecker inputChecker;
-    public PlayerInputChecker InputChecker {get { return(inputChecker); }}
+    [SerializeField] PlayerInputChecker _inputChecker;
+    public PlayerInputChecker InputChecker {get { return(_inputChecker); }}
+    [SerializeField] StaminaController _staminaController;
+    public StaminaController StaminaController { get { return (_staminaController); } }
 
     public Hittable hp {get ; private set;}
     public Damage damage {get ; private set;}
@@ -34,7 +32,7 @@ public class PlayerStateMachine : StateMachine
     }
 
     // Required for state machine initialization
-    public enum StateId { Idle, Active, Sneak, Sprint } // feel free to add more
+    public enum StateId { Idle, Sneak, Sprint } // feel free to add more
     public bool alive {get ; private set;} = true;
 
     // Awake
@@ -43,7 +41,6 @@ public class PlayerStateMachine : StateMachine
     {
         Init(
             (StateId.Idle, new IdleState(this)),
-            (StateId.Active, null),
             (StateId.Sneak, new SneakState(this)),
             (StateId.Sprint, new SprintState(this))
         );
@@ -53,7 +50,7 @@ public class PlayerStateMachine : StateMachine
 
         hp.OnDeath += OnDeath;
 
-        _playerController.inputChecker = this.inputChecker;
+        _playerController.inputChecker = this._inputChecker;
     }
 
     protected virtual void OnEnable()

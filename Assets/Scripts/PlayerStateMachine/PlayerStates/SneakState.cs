@@ -1,11 +1,11 @@
 using UnityEngine;
 
 using PSM = PlayerStateMachine;
-using States = PlayerStateMachine.StateId;
 
 public class SneakState : StateComponent<PlayerStateMachine>
 {
     PlayerInputChecker inputChecker;
+    StaminaController staminaController;
 
     PSM.ControllerData data = new PSM.ControllerData { height = 0.6f, moveSpeed = 6 };
     
@@ -15,13 +15,13 @@ public class SneakState : StateComponent<PlayerStateMachine>
     public SneakState(PlayerStateMachine machine) : base(machine)
     {
         inputChecker = stateMachine.InputChecker;
+        staminaController = stateMachine.StaminaController;
 
     }
     public override void Enter(StateComponent previousState)
     {
         Debug.Log("In Sneak!");
         stateMachine.UpdatePlayerController(data);
-        
         
     }
     public override void Exit(StateComponent nextState) {}
@@ -33,7 +33,7 @@ public class SneakState : StateComponent<PlayerStateMachine>
 
         if (exitCond1) // || exitCond2)
         {
-            stateMachine.TransitionState(States.Idle);
+            stateMachine.TransitionState(PSM.StateId.Idle);
         }
     }
     public override void FixedUpdate(float dt)

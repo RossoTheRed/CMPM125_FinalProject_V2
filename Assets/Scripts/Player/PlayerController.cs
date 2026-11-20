@@ -16,9 +16,6 @@ public class PlayerController : MonoBehaviour
 { 
     [SerializeField] CharacterController charController;
     public PlayerInputChecker inputChecker; // Should be set by the Player's state machine
-    StaminaController stamController;
-
-    TimeKeeperScript tk;
 
     [Header("State", order = 1)]
 
@@ -35,10 +32,6 @@ public class PlayerController : MonoBehaviour
     [Header("Movement", order = 1)]
     [SerializeField] float moveSpeed;
 
-    [Header("Sprinting", order = 2)]
-    float sprintStaminaCost = 0.25f;
-    private TimeKeeperScript.Countdown sprintCounter;
-
     [Header("Crouching", order = 2)]
     float baseHeight;
 
@@ -51,8 +44,6 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        tk = TimeKeeperScript.Instance;
-
         baseHeight = charController.height;
 
         groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();

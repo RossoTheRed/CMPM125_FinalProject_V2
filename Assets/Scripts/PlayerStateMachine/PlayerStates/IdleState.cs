@@ -1,11 +1,11 @@
 using UnityEngine;
 
 using PSM = PlayerStateMachine;
-using States = PlayerStateMachine.StateId;
 
 public class IdleState : StateComponent<PlayerStateMachine>
 {
     PlayerInputChecker inputChecker;
+    StaminaController staminaController;
 
     PSM.ControllerData data = new PSM.ControllerData{ height = 1, moveSpeed = 10};
 
@@ -13,6 +13,7 @@ public class IdleState : StateComponent<PlayerStateMachine>
     public IdleState(PlayerStateMachine machine) : base(machine)
     {
         inputChecker = stateMachine.InputChecker;
+        staminaController = stateMachine.StaminaController;
     }
 
     // This is called every time you transition to this state
@@ -20,6 +21,8 @@ public class IdleState : StateComponent<PlayerStateMachine>
     {
         Debug.Log("In Idle!");
         stateMachine.UpdatePlayerController(data);
+        staminaController.DegradeMaximum_Start();
+        staminaController.Regen_Start();
     }
 
     // This is called every time you transition out of this state
@@ -30,10 +33,10 @@ public class IdleState : StateComponent<PlayerStateMachine>
     {
         if (inputChecker.sprintKey.WasPressedThisFrame())
         {
-            stateMachine.TransitionState(States.Sprint);
+            stateMachine.TransitionState(PSM.StateId.Sprint);
         } else if (inputChecker.crouchKey.WasPressedThisFrame())
         {
-            stateMachine.TransitionState(States.Sneak);
+            stateMachine.TransitionState(PSM.StateId.Sneak);
         }
     }
 
