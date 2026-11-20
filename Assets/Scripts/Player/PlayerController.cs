@@ -7,35 +7,20 @@ using UnityEngine.InputSystem;
 
 
 /* To do:
-    [Bug] Player stays crouched when falling
-    [Bug] Player can jump up steep ramp when they shouldn't be able to
-    [Feature] Sprinting should consume stamina
+
 */
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(StaminaController))]
 public class PlayerController : MonoBehaviour
 { 
-    public enum MovementState 
-    {
-        Normal,
-        Crouching,
-        Sprinting,
-    }
-
-    CharacterController charController;
+    [SerializeField] CharacterController charController;
+    public PlayerInputChecker inputChecker; // Should be set by the Player's state machine
     StaminaController stamController;
 
     TimeKeeperScript tk;
 
-    InputAction moveKeys;
-    InputAction crouchKey;
-    InputAction jumpKey;
-    InputAction sprintKey;
-
     [Header("State", order = 1)]
-    [SerializeField] MovementState movementState;
-    [SerializeField] PlayerStateMachine stateMachine;
 
     [SerializeField] BoxCollider groundChecker;
     ObjectCheck groundCheckScript;
@@ -51,14 +36,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float moveSpeed;
 
     [Header("Sprinting", order = 2)]
-    [SerializeField] float sprintSpeedMod = 1.5f;
     float sprintStaminaCost = 0.25f;
     private TimeKeeperScript.Countdown sprintCounter;
 
     [Header("Crouching", order = 2)]
-    [SerializeField] float crouchSpeedMod = 0.70f;
-    [SerializeField] float crouchHeightMod = 0.7f;
-    float BASEHEIGHT;
+    float baseHeight;
 
     [Header("Jumping", order = 2)]
     [SerializeField] float jumpPower = 6;
@@ -69,12 +51,9 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
-
         tk = TimeKeeperScript.Instance;
 
-        charController = this.GetComponent<CharacterController>();
-        BASEHEIGHT = charController.height;
+        baseHeight = charController.height;
 
         groundCheckScript = groundChecker.gameObject.GetComponent<ObjectCheck>();
         if (groundCheckScript == null)
@@ -89,30 +68,23 @@ public class PlayerController : MonoBehaviour
             ceilingChecker.gameObject.AddComponent<ObjectCheck>();
             ceilingCheckScript = ceilingChecker.gameObject.GetComponent<ObjectCheck>();
         }
-
-        moveKeys = InputSystem.actions.FindAction("Move", true);
-        crouchKey = InputSystem.actions.FindAction("Crouch", true);
-        jumpKey = InputSystem.actions.FindAction("Jump", true);
-        sprintKey = InputSystem.actions.FindAction("Sprint", true);
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         CheckGrounded();
         CheckHeadBlocked();
 
         Move();
         Jump();
-        Crouch();
-        Sprint();
     }
 
     void Move()
     {
-        if (moveKeys.IsPressed())
+        if (inputChecker.moveKeys.IsPressed())
         {
-            Vector2 inputValue = moveKeys.ReadValue<Vector2>(); // [0] Sideways value | [1] Forward value
+            Vector2 inputValue = inputChecker.moveKeys.ReadValue<Vector2>(); // [0] Sideways value | [1] Forward value
             charController.Move(transform.forward * moveSpeed * inputValue[1]);
             charController.Move(transform.right * moveSpeed * inputValue[0]);
         }
@@ -120,7 +92,7 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
-        if (jumpKey.WasPressedThisFrame() && isGrounded && IsCrouching() == false)
+        if (inputChecker.jumpKey.WasPressedThisFrame() && isGrounded)
         {
             verticalVelocity[1] = Mathf.Sqrt(jumpPower * -2 * gravity);
         }
@@ -146,68 +118,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Crouch()
-    { //Later add switchable setting for toggle/hold crouch
-        // Later make it so crouch deactivates in the air
-        // if (crouchKey.IsPressed() && IsCrouching() == false && IsSprinting() == false && isGrounded)
-        // {
-        //     ChangeMoveState("crouching");
-        //     charController.height = crouchHeightMod;
-        //     ChangeHeight(transform.localScale.y * crouchHeightMod);
-        // } else if (crouchKey.IsPressed() == false && IsCrouching() && isCramped == false)
-        // {
-        //     ChangeMoveState("normal");
-        //     charController.height = 1;
-        //     ChangeHeight(BASEHEIGHT);
-        // }
-
-        if (crouchKey.WasPressedThisFrame())
-        {
-            stateMachine.TransitionState(PlayerStateMachine.StateId.Sneak);
-            ChangeHeight(stateMachine.height);
-            ChangeSpeed(stateMachine.moveSpeed/100);
-        }
-
-        if (crouchKey.IsPressed() == false && isCramped == false)
-        {
-            stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
-            ChangeHeight(stateMachine.height);
-            ChangeSpeed(stateMachine.moveSpeed/100);
-        }
-    }
-
-    void Sprint()
-    { // Add toggleable sprint later too
-        // if (sprintKey.IsPressed() && IsSprinting() == false)
-        // {
-        //     ChangeHeight(BASEHEIGHT);
-        //     ChangeMoveState("sprinting");
-        // } else if (sprintKey.IsPressed() == false && IsSprinting())
-        // {
-        //     ChangeMoveState("normal");
-        // }
-
-        if (sprintKey.WasPressedThisFrame())
-        {
-            stateMachine.TransitionState(PlayerStateMachine.StateId.Sprint);
-            ChangeHeight(stateMachine.height);
-            ChangeSpeed(stateMachine.moveSpeed / 100);
-        }
-
-        if (sprintKey.WasReleasedThisFrame())
-        {
-            stateMachine.TransitionState(PlayerStateMachine.StateId.Idle);
-            ChangeHeight(stateMachine.height);
-            ChangeSpeed(stateMachine.moveSpeed / 100);
-        }
-    }
-
     public void ChangeHeight(float newHeight)
     {
         transform.localScale = new Vector3(transform.localScale.x, newHeight * 2, transform.localScale.z); // Placeholder until we have a player with animations
         charController.height = newHeight;
 
-        ceilingChecker.size = new Vector3(1, 0.1f + (BASEHEIGHT - newHeight), 1);
+        ceilingChecker.size = new Vector3(1, 0.1f + (baseHeight - newHeight), 1);
     }
 
     public void ChangeSpeed(float newSpeed)
@@ -223,63 +139,6 @@ public class PlayerController : MonoBehaviour
     void CheckHeadBlocked()
     {
         isCramped = ceilingCheckScript.IsBlocked();
-    }
-
-    void ChangeMoveState(string newState)
-    {
-        Debug.Log($"newState: {newState.ToLower()}");
-
-        switch(newState.ToLower())
-        {
-            case("sprinting"):
-                movementState = MovementState.Sprinting;
-                break;
-            case ("sprint"):
-                movementState = MovementState.Sprinting;
-                break;
-
-            case ("crouching"):
-                movementState = MovementState.Crouching;
-                break;
-            case ("crouch"):
-                movementState = MovementState.Crouching;
-                break;
-
-            case ("normal"):
-                movementState = MovementState.Normal;
-                break;
-
-            default:
-                Debug.LogError($"\"{newState}\" is not a valid state for player movement!");
-                break;
-        }
-    }
-
-    bool IsSprinting()
-    {
-        return(movementState == MovementState.Sprinting);
-    }
-
-    bool IsCrouching()
-    {
-        return(movementState == MovementState.Crouching);
-    }
-
-    void Debug_CallInputs(bool constantReport)
-    {
-        if (constantReport == true)
-        {
-            Debug.Log($"moveKeys: {moveKeys.ReadValue<Vector2>()}");
-            Debug.Log($"jumpKey: {jumpKey.IsPressed()}");
-            Debug.Log($"crouchKey: {crouchKey.IsPressed()}");
-            Debug.Log($"sprintKey: {sprintKey.IsPressed()}");
-        } else
-        {
-            if (moveKeys.IsPressed()) { Debug.Log($"moveKeys: {moveKeys.ReadValue<Vector2>()}"); }
-            if (jumpKey.IsPressed()) { Debug.Log($"jumpKey: {jumpKey.IsPressed()}"); }
-            if (crouchKey.IsPressed() ) { Debug.Log($"crouchKey: {crouchKey.IsPressed()}"); }
-            if (sprintKey.IsPressed()) { Debug.Log($"sprintKey: {sprintKey.IsPressed()}"); }
-        }
     }
 
     void Debug_LogVelocity()

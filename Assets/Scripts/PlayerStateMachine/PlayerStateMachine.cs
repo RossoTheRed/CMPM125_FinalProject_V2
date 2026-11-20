@@ -7,10 +7,14 @@ using UnityEngine.InputSystem;
 public class PlayerStateMachine : StateMachine
 {
     [SerializeField] private GameObject playerCamera;
+    [SerializeField] private PlayerController _playerController;
+    public PlayerController playerController {get { return(_playerController); }}
 
     public InputActionMap fighterActionMap;
     // Movement Input Actions
     public InputAction movePlaneAction; // Note: Might be bad idea to set value here - chris
+    [SerializeField] PlayerInputChecker inputChecker;
+    public PlayerInputChecker InputChecker {get { return(inputChecker); }}
 
     public Hittable hp {get ; private set;}
     public Damage damage {get ; private set;}
@@ -21,8 +25,13 @@ public class PlayerStateMachine : StateMachine
     public float height { get; private set; } = 1;
     // or this which might be much better 
     [SerializeField] protected int _maxHealth = 10;
-    public virtual int maxHealth => _maxHealth; 
-    
+    public virtual int maxHealth => _maxHealth;
+
+    public class ControllerData
+    {
+        public float ?height;
+        public float ?moveSpeed;
+    }
 
     // Required for state machine initialization
     public enum StateId { Idle, Active, Sneak, Sprint } // feel free to add more
@@ -43,6 +52,8 @@ public class PlayerStateMachine : StateMachine
         hp = new Hittable(maxHealth, Hittable.Team.ENEMY, this.gameObject);
 
         hp.OnDeath += OnDeath;
+
+        _playerController.inputChecker = this.inputChecker;
     }
 
     protected virtual void OnEnable()
@@ -69,15 +80,31 @@ public class PlayerStateMachine : StateMachine
         alive = false;
     }
 
-    public void SetMoveSpeed(int newSpeed)
+    public void SetMoveSpeed(float newSpeed)
     {
-        Debug.Log($"{moveSpeed} -> {newSpeed}");
+        Debug.Log($"moveSpeed: {moveSpeed} -> {newSpeed}");
         moveSpeed = newSpeed;
+        _playerController.ChangeSpeed(moveSpeed/100);
     }
 
     public void SetHeight(float newHeight)
     {
-        Debug.Log($"{height} -> {newHeight}");
+        Debug.Log($"height: {height} -> {newHeight}");
         height = newHeight;
+        _playerController.ChangeHeight(height);
+    }
+
+    public void UpdatePlayerController(ControllerData data)
+    {
+        // Crude way first, then refactor later whn I know how
+        if (data.height != null)
+        {
+            SetHeight((float) data.height);
+        }
+
+        if (data.moveSpeed != null)
+        {
+            SetMoveSpeed((float) data.moveSpeed);
+        }
     }
 }
