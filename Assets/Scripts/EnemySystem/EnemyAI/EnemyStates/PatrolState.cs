@@ -1,38 +1,29 @@
+using EnemyBT.Tree;
 using UnityEngine;
 
 namespace EnemyStates {
 
-public class PatrolState : StateComponent<PlayerStateMachine>
+public class PatrolState : StateComponent<EnemyFSM>
 {
-    private Behavior behaviorTreeRoot = null;
-    public PatrolState(Behavior root, PlayerStateMachine machine) : base(machine)
+    private EnemyBaseBT behaviorTree;
+    public PatrolState(EnemyBaseBT bt, EnemyFSM machine) : base(machine)
     {
-        Initialize(root);
+        behaviorTree = bt;
+        behaviorTree.OnInitialize();
     }
 
-    // Initialize 
-    // Will start up the enemy behavior tree if one exists
-    public void Initialize(Behavior root)
-    {
-        behaviorTreeRoot = root;
-        if (behaviorTreeRoot != null) behaviorTreeRoot.OnInitialize();
-
-    }
     public override void Enter(StateComponent previousState)
     {
-        if (behaviorTreeRoot != null) behaviorTreeRoot.OnInitialize();
+        behaviorTree.OnInitialize();
     }
     public override void Exit(StateComponent nextState) {}
     public override void Update(float dt)
     {
-        if (behaviorTreeRoot != null && !behaviorTreeRoot.IsTerminated())
-        {
-            behaviorTreeRoot.Tick();
-        }
+        behaviorTree.Tick();
     }
     public override void FixedUpdate(float dt)
     {
-        if (behaviorTreeRoot != null) behaviorTreeRoot.FixedTick();
+        behaviorTree.FixedTick();
     }
 
 

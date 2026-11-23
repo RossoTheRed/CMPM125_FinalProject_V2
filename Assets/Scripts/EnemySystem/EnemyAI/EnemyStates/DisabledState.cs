@@ -1,10 +1,10 @@
 
 namespace EnemyStates {
 
-public class DisabledState : StateComponent<PlayerStateMachine>
+public class DisabledState : StateComponent<EnemyFSM>
 {
     private Behavior behaviorTreeRoot = null;
-    public DisabledState(Behavior root, PlayerStateMachine machine) : base(machine)
+    public DisabledState(Behavior root, EnemyFSM machine) : base(machine)
     {
         Initialize(root);
     }

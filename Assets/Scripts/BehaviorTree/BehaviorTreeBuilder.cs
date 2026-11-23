@@ -31,13 +31,14 @@ public class BehaviorTreeBuilder
     }
    
 
-    // add end to make sure it pops the stack
+    // add end to make sure it pops the stack, acts as a {} kind of
     public BehaviorTreeBuilder End()
     {
         if (parentStack.Count > 0)
         {
             parentStack.Pop();
         }
+
         return this;
     }
     
@@ -73,6 +74,13 @@ public class BehaviorTreeBuilder
     }
 
     public BehaviorTreeBuilder Action(ActionNode action)
+    {
+        AddNodeToParent(action);
+        // no pushing since childless
+        return this;
+    }
+
+    public BehaviorTreeBuilder FixedAction(FixedActionNode action)
     {
         AddNodeToParent(action);
         // no pushing since childless

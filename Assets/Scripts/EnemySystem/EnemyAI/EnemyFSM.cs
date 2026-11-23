@@ -1,12 +1,24 @@
 using System.Collections.Generic;
+using System.IO;
+using EnemyBT.Tree;
+using EnemyStates;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyFSM : StateMachine
 {
     [Header("References", order = 1)]
-    [SerializeField] protected List<Behavior> _behaviorTreeRoots = new List<Behavior>();
-    public virtual List<Behavior> behaviorTreeRoots => _behaviorTreeRoots; 
+    [SerializeField] protected GameObject _target;
+    public virtual GameObject target => _target; 
+    [SerializeField] protected NavMeshAgent _navAgent;
+    public virtual NavMeshAgent navAgent => _navAgent;  
+    public bool hasNavPath {get; private set;} = false;
+    public NavMeshPath path;
+    public Rigidbody sourceRB {get; private set;}
     public Hittable hp {get ; private set;}
+    public LayerMask targetMask {get; private set;}
+    public LayerMask collisionSightMask {get; private set;}
+    private EnemyBlackboard enemyBlackboard;
 
     // Enemy Settings
     [Header("Settings", order = 2)]
@@ -16,7 +28,12 @@ public class EnemyFSM : StateMachine
     [SerializeField] protected int _maxSpeed = 10;
     public virtual int maxSpeed => _maxSpeed; 
 
+    [SerializeField] protected int _sightDist = 10;
+    public virtual int sightDist => _sightDist; 
+    [SerializeField] protected int _rotateSpeed = 1;
+    public virtual int rotateSpeed => _rotateSpeed; 
 
+    
     
 
     // Required for state machine initialization
@@ -27,14 +44,20 @@ public class EnemyFSM : StateMachine
     // Sets up the states with proper connections to possible states
      protected virtual void Awake()
     {
+        enemyBlackboard = new EnemyBlackboard();
+        enemyBlackboard.SetEnemyFSM(this);  
+
         Init(
-            (StateId.Disabled, null),
-            (StateId.Patrol, null),
+            (StateId.Disabled, new DisabledState(null, this)),
+            (StateId.Patrol, new PatrolState(new PatrolBT(enemyBlackboard), this)),
             (StateId.Chase, null)
         );
-        TransitionState(StateId.Disabled); // initial state
+        TransitionState(StateId.Patrol); // initial state
 
+        sourceRB = GetComponent<Rigidbody>();
         hp = new Hittable(maxHealth, Hittable.Team.ENEMY, this.gameObject);
+        targetMask = LayerMask.NameToLayer("Player");
+        collisionSightMask = -1;
 
         hp.OnDeath += OnDeath;
 
@@ -65,4 +88,11 @@ public class EnemyFSM : StateMachine
         alive = false;
     }
 
+    protected void ResetValidPath()
+    {
+        if (path.status == NavMeshPathStatus.PathComplete && hasNavPath != false)
+        {
+            hasNavPath = false;
+        }
+    }
 }
