@@ -10,19 +10,20 @@ public class FixedActionNode : LeafNode
     { 
         _fixedAction = fixedAction;
         _action = action; 
+        m_eTickType = TickType.BH_BOTH;
     }
 
     protected override Status Update()
     {
-        if (_action == null) return Status.BH_SUCCESS;
+        if (_action == null) return Status.BH_SUCCESS; // returns success default to let all actions to be played through
         else return _action();
     }
     protected override Status FixedUpdate()
     {
-        if (_fixedAction == null) return Status.BH_INVALID;
+        if (_fixedAction == null) return Status.BH_SUCCESS; // no fixed action exists, why are you using this?
         else
         {
-            return _fixedAction();   
+            return _fixedAction(); // either running, failure, or success
         }
     }
 }

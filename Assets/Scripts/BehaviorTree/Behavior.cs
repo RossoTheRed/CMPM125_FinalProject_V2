@@ -10,18 +10,19 @@ public enum Status
 public enum TickType
 {
     BH_LOGIC,
-    BH_FIXED,
+    BH_PHYSICS,
     BH_BOTH
 };
     
 public abstract class Behavior
 {
-    // maybe make this read only
     private Status m_eStatus;
+    protected TickType m_eTickType = TickType.BH_LOGIC;
 
     public Behavior()
     {
         m_eStatus = Status.BH_INVALID;
+        m_eTickType = TickType.BH_PHYSICS;
     }
 
     ~Behavior() {}
@@ -40,6 +41,9 @@ public abstract class Behavior
 
     public virtual Status Tick()
     {
+        if (m_eTickType == TickType.BH_PHYSICS) 
+            return Status.BH_RUNNING; // return running so waits for fixed update to finish
+        
         if (m_eStatus != Status.BH_RUNNING) OnInitialize();
         m_eStatus = Update();
         if (m_eStatus != Status.BH_RUNNING) OnTerminate(m_eStatus);
@@ -55,13 +59,16 @@ public abstract class Behavior
     // Note: because of this, actions which run during fixed, run always true
     // as to allow for later actions not locked in fixed to keep going 
 
+    // bug area
     public virtual Status FixedTick()
     {
-        if (m_eStatus == Status.BH_RUNNING)
-        {
-            return FixedUpdate();
-        }
-        return Status.BH_INVALID;
+        if (m_eTickType == TickType.BH_LOGIC)
+            return m_eStatus; // returns last known status and skip this
+        
+        if (m_eStatus != Status.BH_INVALID) OnInitialize();
+        m_eStatus = FixedUpdate();
+        if (m_eStatus != Status.BH_RUNNING) OnTerminate(m_eStatus);
+        return m_eStatus;
     }
 
     public void Reset()
@@ -73,6 +80,10 @@ public abstract class Behavior
     public Status GetStatus()
     {
         return m_eStatus;
+    }
+    public TickType GetTickType()
+    {
+        return m_eTickType;
     }
 
     public bool IsTerminated()

@@ -15,14 +15,15 @@ public class Parallel : Composite
 
     public override void OnInitialize()
     {
+        base.OnInitialize(); // not sure if this is after or before
         foreach (var child in m_Children)
         {
             if (child.GetStatus() == Status.BH_SUCCESS || child.GetStatus() == Status.BH_FAILURE)
             {
-                child.Reset();
+                child.Reset(); // warning, if you need cached values, this will reset them, might figure out a way around this if possible?
             }
         }
-        base.OnInitialize();
+        //base.OnInitialize();
     }
 
     protected override Status Update()

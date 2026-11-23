@@ -7,6 +7,8 @@ class Sequence : Composite
     {
         while (m_CurrentChild < m_Children.Count)
         {
+            // if physics only, wait for it to finish
+            if (m_Children[m_CurrentChild].GetTickType() == TickType.BH_PHYSICS) return Status.BH_RUNNING;
             Status status = m_Children[m_CurrentChild].Tick();
             if (status != Status.BH_SUCCESS) return status;
             if (++m_CurrentChild >= m_Children.Count) return Status.BH_SUCCESS; 
@@ -27,34 +29,57 @@ class Sequence : Composite
     // it not only checks if it is running but as internal counter ot make sure its not constantly checking
    // that way it can return that its still running but not be in a loop
     
-    // NOTE: Any process like moveTo that takes multiple frames, must return running
+
     protected override Status FixedUpdate()
     {
-        if (GetStatus() != Status.BH_RUNNING) return GetStatus();
-        
+        int pastCount = 0; 
+        // current child is how far we got, we just need to check to make it didnt fail (shouldnt be the case)
+        // will run up to where we are at, if not failure, run the physics only and both
+        while (pastCount < m_CurrentChild)
+        {
+            // failed, probably don't go on, even though it shouldn't due to pastCount < current child then
+            if (m_Children[pastCount].GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;
+            Status status = Status.BH_SUCCESS; // standard if its normal tick
+            if (m_Children[pastCount].GetTickType() == TickType.BH_BOTH || m_Children[pastCount].GetTickType() == TickType.BH_PHYSICS) // runs both
+            {
+                status = m_Children[pastCount].FixedTick(); // should always return true in this case, because it is behind
+            }
+            if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
+            pastCount++;
+        }
+
+        // check if the current child failed, or if it was just running
+        if (m_Children[pastCount].GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;
         while (m_CurrentChild < m_Children.Count)
         {
-            Status status = m_Children[m_CurrentChild].FixedTick();
-            if (status == Status.BH_SUCCESS)// run the next child
+            Behavior currChild = m_Children[pastCount];
+            if (currChild.GetTickType() == TickType.BH_LOGIC)
             {
-                m_CurrentChild++;
+                Status logicStatus = currChild.Tick();
+                if (logicStatus != Status.BH_SUCCESS) return logicStatus;
+                // passed
             }
-            else
+            else // physics or both (THIS IS CATCHING UP)
             {
-                return status;
+                Status status = Status.BH_INVALID;
+                if (currChild.GetTickType() == TickType.BH_BOTH)
+                {
+                    status = currChild.Tick();
+                    if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
+                    // success it doesn't matter, running means its waiting for a physics loop,
+                    // which we are about to do - chris
+                }
+                status = currChild.FixedTick();
+                if (status == Status.BH_FAILURE) return status;
+                if (status == Status.BH_RUNNING) return status;
             }
-
-            if (m_CurrentChild >= m_Children.Count)
-            {
-                return Status.BH_SUCCESS; 
-            }
-
-            Status tickStatus = Tick();
-            if (tickStatus == Status.BH_RUNNING) continue;
-            else if (tickStatus == Status.BH_SUCCESS) return Status.BH_SUCCESS;
-            else return tickStatus;
             
+            m_CurrentChild++;
+            if (++m_CurrentChild >= m_Children.Count) return Status.BH_SUCCESS; 
         }
-        return Status.BH_INVALID;
+        
+        #pragma warning disable CS0162 
+        return Status.BH_SUCCESS; 
+        #pragma warning restore CS0162
     }
 }

@@ -15,7 +15,6 @@ public class LineOfSight : ConditionNode
     {
         Debug.Log("Checking");
         bool condition = GeneralConditions.HasLineOfSight(enemyBlackboard.enemyFSM.transform, enemyBlackboard.enemyFSM.target.transform, enemyBlackboard.enemyFSM.sightDist, enemyBlackboard.enemyFSM.targetMask, enemyBlackboard.enemyFSM.collisionSightMask);
-        lastCondition = condition;
         return condition ? Status.BH_SUCCESS : Status.BH_FAILURE;
     }
 }
