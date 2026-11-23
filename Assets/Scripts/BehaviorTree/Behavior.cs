@@ -66,8 +66,9 @@ public abstract class Behavior
             return m_eStatus; // returns last known status and skip this
         
         if (m_eStatus != Status.BH_RUNNING && m_eTickType == TickType.BH_PHYSICS) OnInitialize();
+        Status oldStatus = m_eStatus; 
         m_eStatus = FixedUpdate();
-        if (m_eStatus != Status.BH_RUNNING) OnTerminate(m_eStatus);
+        if (m_eStatus != Status.BH_RUNNING && oldStatus != Status.BH_SUCCESS) OnTerminate(m_eStatus);
         return m_eStatus;
     }
 

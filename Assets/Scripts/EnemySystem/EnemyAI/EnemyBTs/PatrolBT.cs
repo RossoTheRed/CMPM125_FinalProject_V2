@@ -8,13 +8,23 @@ public class PatrolBT : EnemyBaseBT
 {
 
     public PatrolBT(EnemyBlackboard enemyBlackboard) : base(enemyBlackboard) {}
-    protected override BehaviorTreeBuilder BuildBehaviorTree(EnemyBlackboard enemyBlackboard)
+    protected override BehaviorTreeBuilder BuildBehaviorTree(EnemyBlackboard eBoard)
     {
         Debug.Log("Built");
         BehaviorTreeBuilder bt = new BehaviorTreeBuilder()
-        .Sequence()
-            .Condition(new LineOfSight(enemyBlackboard))
-            .Action(new NavToLocation(enemyBlackboard));
+        .Selector()
+            .Sequence() // should we chase
+                .Condition(new LineOfSight(eBoard))
+                .Action(new NavToLocation(eBoard))
+            .End()
+            .Sequence() // pure wander random pathfind
+            .End()
+            .Sequence()
+                
+
+            .End()
+            .Sequence()
+                .Action(new HaltAcceleration(eBoard));
 
         return bt;
     }

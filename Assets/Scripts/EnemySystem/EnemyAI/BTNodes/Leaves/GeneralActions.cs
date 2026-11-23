@@ -11,6 +11,14 @@ public static class GeneralActions
         source.rotation = Quaternion.RotateTowards(source.transform.rotation, rotation, step);
     }
 
+    public static void BasicHalt(Rigidbody source, int maxSpeed)
+    {
+        Vector3 direction = Vector3.zero;
+        direction.Set(direction.x, direction.y, direction.z);
+        Vector3 velocityChange = (direction * maxSpeed) - source.linearVelocity;
+        source.AddForce(velocityChange, ForceMode.Acceleration);
+    }
+
     public static void BasicChase(Rigidbody source, Transform target, int maxSpeed)
     {
         Vector3 direction = (target.position - source.transform.position).normalized;

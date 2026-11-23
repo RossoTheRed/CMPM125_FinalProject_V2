@@ -3,7 +3,6 @@ using System.Collections.Generic;
 public abstract class Composite : Behavior
 {
     protected List<Behavior> m_Children = new List<Behavior>();
-    protected bool physicsFrame = false;
     public Composite() { m_eTickType = TickType.BH_BOTH; }
     public override void Abort()
     {

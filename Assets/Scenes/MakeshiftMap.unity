@@ -1919,25 +1919,13 @@ PrefabInstance:
       value: 112
       objectReference: {fileID: 0}
     - target: {fileID: 2686815850294511219, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
-      propertyPath: m_Speed
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 2686815850294511219, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
       propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2686815850294511219, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
-      propertyPath: m_StoppingDistance
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5780008377074109108, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
       propertyPath: _target
       value: 
       objectReference: {fileID: 466226441}
-    - target: {fileID: 5780008377074109108, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
-      propertyPath: _maxSpeed
-      value: 10
-      objectReference: {fileID: 0}
     - target: {fileID: 5780008377074109108, guid: 1603b92c2a4d00c4d8e548475c1839db, type: 3}
       propertyPath: m_Enabled
       value: 1

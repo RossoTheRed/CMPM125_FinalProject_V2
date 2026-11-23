@@ -33,6 +33,7 @@ class Sequence : Composite
 
     sealed protected override Status FixedUpdate()
     {
+        Debug.Log($"Fixed Update Sequence");
         int pastCount = 0; 
         Debug.Log($"Past Count {pastCount}");
         // current child is how far we got, we just need to check to make it didnt fail (shouldnt be the case)
@@ -42,11 +43,12 @@ class Sequence : Composite
             // failed, probably don't go on, even though it shouldn't due to pastCount < current child then
             if (m_Children[pastCount].GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;
             Status status = Status.BH_SUCCESS; // standard if its normal tick
-            if (m_Children[pastCount].GetTickType() == TickType.BH_BOTH || m_Children[pastCount].GetTickType() == TickType.BH_PHYSICS) // runs both
+            if (m_Children[pastCount].GetTickType() == TickType.BH_BOTH) // runs both
             {
                 status = m_Children[pastCount].FixedTick(); // should always return true in this case, because it is behind
+                if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
             }
-            if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
+            
             pastCount++;
             Debug.Log($"Past Count {pastCount}");
         }
@@ -57,7 +59,7 @@ class Sequence : Composite
         if (m_Children[pastCount].GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;
         while (m_CurrentChild < m_Children.Count)
         {
-            Behavior currChild = m_Children[pastCount];
+            Behavior currChild = m_Children[m_CurrentChild];
             if (currChild.GetTickType() == TickType.BH_LOGIC)
             {
                 Status logicStatus = currChild.Tick();
@@ -82,7 +84,6 @@ class Sequence : Composite
                 if (status == Status.BH_RUNNING) return status;
             }
             Debug.Log($"next child");
-            m_CurrentChild++;
             if (++m_CurrentChild >= m_Children.Count) return Status.BH_SUCCESS; 
         }
         

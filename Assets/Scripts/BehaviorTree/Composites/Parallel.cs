@@ -58,7 +58,7 @@ public class Parallel : Composite
 
         foreach(var child in m_Children)
         {
-            if (child.GetStatus() == Status.BH_RUNNING)
+            if (child.GetStatus() == Status.BH_RUNNING  || child.GetTickType() == TickType.BH_BOTH)
             {
                 child.FixedTick();
             }

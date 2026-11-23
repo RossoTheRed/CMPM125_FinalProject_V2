@@ -12,6 +12,7 @@ public class EnemyBlackboard
     // Settings
     [SerializeField] private float roomTraversalTime = 4f;
     [SerializeField] private int roomTravelReset = 2;
+    [SerializeField] private float roomSize = 2f;
     // General Info
     public bool _isValidPrediction => predictedRoom.isValidPrediction;
     public bool _isLocationKnown => lastKnownPosition.isLocationKnown;
@@ -79,6 +80,10 @@ public class EnemyBlackboard
     public Vector2Int GetPredictedRoomGridPosition()
     {
         return predictedRoom.predictedRoomGridPosition;
+    }
+    public float GetRoomSize()
+    {
+        return roomSize;
     }
     
 }
