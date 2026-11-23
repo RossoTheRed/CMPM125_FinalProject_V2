@@ -9,15 +9,16 @@ public class NavToLocation : ActionNode
     public NavToLocation(EnemyBlackboard enemyBlackboard) : base() 
     {
         this.enemyBlackboard = enemyBlackboard;
+        m_eTickType = TickType.BH_BOTH;
     }
     
-    protected override Status Update() 
+    sealed protected override Status Update() 
     {
         // because there is a fixed update, it should go and commit those actions
         return Status.BH_SUCCESS;
     }
 
-    protected override Status FixedUpdate()
+    sealed protected override Status FixedUpdate()
     {
         
         GeneralActions.RotateTowards(enemyBlackboard.enemyFSM.sourceRB, enemyBlackboard.enemyFSM.target.transform, enemyBlackboard.enemyFSM.rotateSpeed);
@@ -30,7 +31,8 @@ public class NavToLocation : ActionNode
             GeneralActions.BasicChase(enemyBlackboard.enemyFSM.sourceRB, finalLocation, enemyBlackboard.enemyFSM.maxSpeed);
         }
         else GeneralActions.BasicChase(enemyBlackboard.enemyFSM.sourceRB, enemyBlackboard.enemyFSM.transform.position, enemyBlackboard.enemyFSM.maxSpeed);
-        return Status.BH_RUNNING;
+        Debug.Log($"Nav Status: {status}");
+        return Status.BH_SUCCESS;
     }
 
     protected bool FindValidPosition(Vector3 location, out Vector3 finalLocation)

@@ -65,7 +65,7 @@ public abstract class Behavior
         if (m_eTickType == TickType.BH_LOGIC)
             return m_eStatus; // returns last known status and skip this
         
-        if (m_eStatus != Status.BH_INVALID) OnInitialize();
+        if (m_eStatus != Status.BH_RUNNING && m_eTickType == TickType.BH_PHYSICS) OnInitialize();
         m_eStatus = FixedUpdate();
         if (m_eStatus != Status.BH_RUNNING) OnTerminate(m_eStatus);
         return m_eStatus;
@@ -88,7 +88,7 @@ public abstract class Behavior
 
     public bool IsTerminated()
     {
-        return m_eStatus == Status.BH_SUCCESS || m_eStatus == Status.BH_FAILURE;
+        return m_eStatus == Status.BH_SUCCESS || m_eStatus == Status.BH_FAILURE || m_eStatus == Status.BH_ABORTED;
     }
 
     public bool IsRunning()

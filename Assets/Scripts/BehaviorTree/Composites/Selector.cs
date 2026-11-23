@@ -1,3 +1,4 @@
+
 class Selector : Composite
 {
     protected int m_CurrentChild;
@@ -38,6 +39,7 @@ class Selector : Composite
             if (status == Status.BH_SUCCESS) return Status.BH_SUCCESS;
             pastCount++;
         }
+        if (pastCount >= m_Children.Count) return GetStatus();
 
         // check if the current child success, or if it was just running
         if (m_Children[pastCount].GetStatus() == Status.BH_SUCCESS) return Status.BH_SUCCESS;

@@ -13,7 +13,7 @@ public class Parallel : Composite
         m_eFailurePolicy = failure;
     }
 
-    public override void OnInitialize()
+    sealed public override void OnInitialize()
     {
         base.OnInitialize(); // not sure if this is after or before
         foreach (var child in m_Children)
@@ -26,7 +26,7 @@ public class Parallel : Composite
         //base.OnInitialize();
     }
 
-    protected override Status Update()
+    sealed protected override Status Update()
     {
         int iSuccessCount = 0, iFailureCount = 0;
         foreach (var child in m_Children)
@@ -50,7 +50,7 @@ public class Parallel : Composite
         return Status.BH_RUNNING;
     }
 
-    protected override Status FixedUpdate()
+    sealed protected override Status FixedUpdate()
     {
         if (GetStatus() != Status.BH_RUNNING) return GetStatus();
 
@@ -81,7 +81,7 @@ public class Parallel : Composite
         return Status.BH_RUNNING;
     }
 
-    protected override void OnTerminate(Status status)
+    sealed protected override void OnTerminate(Status status)
     {
         foreach (var child in m_Children)
         {

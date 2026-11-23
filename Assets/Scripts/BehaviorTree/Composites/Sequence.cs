@@ -1,9 +1,10 @@
+using UnityEngine;
 class Sequence : Composite
 {
     protected int m_CurrentChild;
     public override void OnInitialize() => m_CurrentChild = 0;
 
-    protected override Status Update()
+    sealed protected override Status Update()
     {
         while (m_CurrentChild < m_Children.Count)
         {
@@ -30,9 +31,10 @@ class Sequence : Composite
    // that way it can return that its still running but not be in a loop
     
 
-    protected override Status FixedUpdate()
+    sealed protected override Status FixedUpdate()
     {
         int pastCount = 0; 
+        Debug.Log($"Past Count {pastCount}");
         // current child is how far we got, we just need to check to make it didnt fail (shouldnt be the case)
         // will run up to where we are at, if not failure, run the physics only and both
         while (pastCount < m_CurrentChild)
@@ -46,8 +48,11 @@ class Sequence : Composite
             }
             if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
             pastCount++;
+            Debug.Log($"Past Count {pastCount}");
         }
+        if (pastCount >= m_Children.Count) return GetStatus();
 
+        Debug.Log($"Checking if child failed");
         // check if the current child failed, or if it was just running
         if (m_Children[pastCount].GetStatus() == Status.BH_FAILURE) return Status.BH_FAILURE;
         while (m_CurrentChild < m_Children.Count)
@@ -56,6 +61,7 @@ class Sequence : Composite
             if (currChild.GetTickType() == TickType.BH_LOGIC)
             {
                 Status logicStatus = currChild.Tick();
+                Debug.Log($"Checking logic Status {logicStatus}");
                 if (logicStatus != Status.BH_SUCCESS) return logicStatus;
                 // passed
             }
@@ -65,15 +71,17 @@ class Sequence : Composite
                 if (currChild.GetTickType() == TickType.BH_BOTH)
                 {
                     status = currChild.Tick();
+                    Debug.Log($"Checking both Status {status}");
                     if (status == Status.BH_FAILURE) return Status.BH_FAILURE;
                     // success it doesn't matter, running means its waiting for a physics loop,
                     // which we are about to do - chris
                 }
                 status = currChild.FixedTick();
+                Debug.Log($"Checking both or fixed Status {status}");
                 if (status == Status.BH_FAILURE) return status;
                 if (status == Status.BH_RUNNING) return status;
             }
-            
+            Debug.Log($"next child");
             m_CurrentChild++;
             if (++m_CurrentChild >= m_Children.Count) return Status.BH_SUCCESS; 
         }
