@@ -58,6 +58,7 @@ public class GameManager
     // Note switch this initialization to be based on saved data
     //public OptionsData gameOptionsData = SaveSystem.GetOptions();
     public GameObject player;
+    public Vector3 bottomLeftCornerGridPosition = Vector3.zero;
 
 
     // place for any managers

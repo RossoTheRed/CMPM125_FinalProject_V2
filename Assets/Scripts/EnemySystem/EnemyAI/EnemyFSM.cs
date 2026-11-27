@@ -95,4 +95,9 @@ public class EnemyFSM : StateMachine
             hasNavPath = false;
         }
     }
+
+    public Vector2Int GetCurrentRoom()
+    {
+        return new Vector2Int(0, 0);
+    }
 }

@@ -9,10 +9,12 @@ public class EnemyBlackboard
     // Data Classes
     public PredictedRoom predictedRoom {get ; private set; }
     public LastKnownPosition lastKnownPosition {get ; private set; }
+    public GridData gridData {get ; private set;}
     // Settings
     [SerializeField] private float roomTraversalTime = 4f;
     [SerializeField] private int roomTravelReset = 2;
     [SerializeField] private float roomSize = 2f;
+    [SerializeField] private Vector2Int vectorGrid = new Vector2Int(10, 10);
     // General Info
     public bool _isValidPrediction => predictedRoom.isValidPrediction;
     public bool _isLocationKnown => lastKnownPosition.isLocationKnown;
@@ -25,6 +27,7 @@ public class EnemyBlackboard
     {
         predictedRoom = new PredictedRoom();
         lastKnownPosition = new LastKnownPosition(roomTraversalTime, roomTravelReset);
+        gridData = new GridData(vectorGrid, roomSize);
     }
 
     public void SetEnemyFSM(EnemyFSM _FSM)
