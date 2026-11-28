@@ -5,11 +5,11 @@ namespace EnemyBT.BlackboardData
 {
     public class GridData
     {
-        public int[,] gridArray {get; private set;}
+        public GridCell[,] gridArray {get; private set;}
         public float gridSpacing {get ; private set; }
-        public GridData(Vector2Int grid, float spacing)
+        public GridData(GridCell[,] grid, float spacing)
         {
-            gridArray = new int[grid.x, grid.y];
+            gridArray = grid;
             
             gridSpacing = spacing;
         }

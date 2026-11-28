@@ -1,11 +1,12 @@
 using UnityEngine;
 using EnemyBT.BlackboardData;
+[System.Serializable]
 public class EnemyBlackboard
 {
     // Core components
     public EnemyFSM enemyFSM {get ; private set;}
     public EnemyDirectorFSM enemyDirectorFSM {get ; private set;}
-    public bool isBlackboardActive = false;
+    public bool isBlackboardActive {get; private set;} = false;
     // Data Classes
     public PredictedRoom predictedRoom {get ; private set; }
     public LastKnownPosition lastKnownPosition {get ; private set; }
@@ -13,8 +14,7 @@ public class EnemyBlackboard
     // Settings
     [SerializeField] private float roomTraversalTime = 4f;
     [SerializeField] private int roomTravelReset = 2;
-    [SerializeField] private float roomSize = 2f;
-    [SerializeField] private Vector2Int vectorGrid = new Vector2Int(10, 10);
+    [SerializeField] private float roomSpacing = 0f;
     // General Info
     public bool _isValidPrediction => predictedRoom.isValidPrediction;
     public bool _isLocationKnown => lastKnownPosition.isLocationKnown;
@@ -27,21 +27,36 @@ public class EnemyBlackboard
     {
         predictedRoom = new PredictedRoom();
         lastKnownPosition = new LastKnownPosition(roomTraversalTime, roomTravelReset);
-        gridData = new GridData(vectorGrid, roomSize);
+    
     }
 
     public void SetEnemyFSM(EnemyFSM _FSM)
     {
         if (enemyFSM) return;
         enemyFSM = _FSM;
-        if (enemyDirectorFSM) isBlackboardActive = true;
+        if (enemyDirectorFSM) {
+            Debug.Log("Enemy Blackboard Complete");
+            isBlackboardActive = true;
+        }
     }
 
     public void SetEnemyDirector(EnemyDirectorFSM _FSM)
     {
         if (enemyDirectorFSM) return;
         enemyDirectorFSM = _FSM;
-        if (enemyFSM) isBlackboardActive = true;
+        if (enemyFSM) {
+            Debug.Log("Enemy Blackboard Complete");
+            isBlackboardActive = true;
+        }
+    }
+    
+    public void SetGrid(GridCell[,] grid, float roomSize = 0f)
+    {
+        float roomSpace = roomSize;
+        if (roomSpace == 0f) roomSpace = roomSpacing;
+        gridData = new GridData(grid, roomSpace);
+        this.roomSpacing = roomSize;
+        Debug.Log("Setup Grid Complete");
     }
     /// <summary>
     /// Data Send
@@ -86,7 +101,7 @@ public class EnemyBlackboard
     }
     public float GetRoomSize()
     {
-        return roomSize;
+        return roomSpacing;
     }
     
 }

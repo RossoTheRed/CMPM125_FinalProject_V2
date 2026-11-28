@@ -1,5 +1,10 @@
 using UnityEngine;
 using EnemyBT;
+using EnemyBT.Tree;
+using EnemyDirectorStates;
+using System;
+using Unity.AI.Navigation;
+using UnityEngine.AI;
 
 public class EnemyDirectorFSM : StateMachine
 {
@@ -8,7 +13,12 @@ public class EnemyDirectorFSM : StateMachine
     public virtual GameObject target => _target;
     public LayerMask targetMask {get; private set;}
     public LayerMask collisionSightMask {get; private set;}
-    private EnemyBlackboard enemyBlackboard;
+    [SerializeField] protected UniversalEnemyBlackboard _universalEnemyBlackboard;
+    public virtual UniversalEnemyBlackboard universalEnemyBlackboard => _universalEnemyBlackboard; 
+    [SerializeField] protected LayoutGenerator _layoutGenerator;
+    private LayoutGenerator layoutGenerator => _layoutGenerator; 
+    [SerializeField] protected NavMeshSurface _navMeshSurface;
+    private NavMeshSurface navMeshSurface => _navMeshSurface;
 
     // Enemy Settings
     [Header("Settings", order = 2)]
@@ -20,26 +30,31 @@ public class EnemyDirectorFSM : StateMachine
     
 
     // Required for state machine initialization
-    public enum StateId { Disabled, Patrol, Chase }
+    public enum StateId { Disabled, Calm, Aggressive }
     public bool alive {get ; private set;} = true;
+    //private Action SetupGridAction;
 
     // Awake
     // Sets up the states with proper connections to possible states
      protected virtual void Awake()
     {
-        enemyBlackboard = new EnemyBlackboard();
-        enemyBlackboard.SetEnemyDirector(this);  
+        Debug.Log("enemy director is awake");
+        EnemyBlackboard enemyBlackboard = universalEnemyBlackboard.enemyBlackboard;  
+        enemyBlackboard.SetEnemyDirector(this);
 
         Init(
-            (StateId.Disabled, new DisabledState(null, this)),
-            (StateId.Patrol, new PatrolState(new PatrolBT(enemyBlackboard), this)),
-            (StateId.Chase, null)
+            (StateId.Disabled, new DisabledDirState(null, this)),
+            (StateId.Calm, new CalmState(new CalmBT(enemyBlackboard), this)),
+            (StateId.Aggressive, null)
         );
-        TransitionState(StateId.Patrol); // initial state
+        TransitionState(StateId.Calm); // initial state
 
         targetMask = LayerMask.NameToLayer("Player");
         collisionSightMask = -1;
 
+        Debug.Log(EventBus.Instance.GetHashCode());
+
+        EventBus.Instance.Register(SetupGridData, EventBus.EventName.ProceduralDone);
     }
 
 
@@ -57,5 +72,21 @@ public class EnemyDirectorFSM : StateMachine
     {
         if (!alive) return;
         alive = false;
+    }
+
+    public void SetupGridData()
+    {
+        Debug.Log("Setting Grid");
+        universalEnemyBlackboard.enemyBlackboard.SetGrid(layoutGenerator.Grid, universalEnemyBlackboard.enemyBlackboard.GetRoomSize());
+        //navMeshSurface.collectObjects(navMeshSurface.children)
+        navMeshSurface.BuildNavMesh();
+        universalEnemyBlackboard.enemyBlackboard.enemyFSM.GetComponent<NavMeshAgent>().Warp(universalEnemyBlackboard.enemyBlackboard.enemyFSM.transform.position);
+        
+        universalEnemyBlackboard.enemyBlackboard.enemyFSM.GetComponent<NavMeshAgent>().enabled = true;
+        //navMeshSurface.BuildNavMesh();
+        
+
+        EventBus.Instance.Deregister(SetupGridData, EventBus.EventName.ProceduralDone);
+    
     }
 }

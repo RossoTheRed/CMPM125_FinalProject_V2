@@ -11,11 +11,14 @@ public class CalmBT : EnemyBaseBT
 
     protected override BehaviorTreeBuilder BuildBehaviorTree(EnemyBlackboard eBoard)
     {
+        //Debug.Log(eBoard.gridData.gridSpacing);
         Debug.Log("Built");
         BehaviorTreeBuilder bt = new BehaviorTreeBuilder()
         .Selector()
             .Sequence() // should we chase
-                .Action(DFS())
+                .Action(new RandomDFS(eBoard, 1, 3))
+            .End()
+        .End();
 
         return bt;
     }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using EnemyBT.Actions;
 using EnemyBT.Tree;
 using EnemyStates;
 using UnityEngine;
@@ -18,7 +19,9 @@ public class EnemyFSM : StateMachine
     public Hittable hp {get ; private set;}
     public LayerMask targetMask {get; private set;}
     public LayerMask collisionSightMask {get; private set;}
-    private EnemyBlackboard enemyBlackboard;
+    [SerializeField] protected UniversalEnemyBlackboard _universalEnemyBlackboard;
+    public virtual UniversalEnemyBlackboard universalEnemyBlackboard => _universalEnemyBlackboard; 
+    //private EnemyBlackboard enemyBlackboard;
 
     // Enemy Settings
     [Header("Settings", order = 2)]
@@ -27,12 +30,22 @@ public class EnemyFSM : StateMachine
 
     [SerializeField] protected int _maxSpeed = 10;
     public virtual int maxSpeed => _maxSpeed; 
+    [SerializeField] protected int _maxAccel = 10;
+    public virtual int maxAccel => _maxAccel; 
+    [SerializeField] protected int _rotateSpeed = 1;
+    public virtual int rotateSpeed => _rotateSpeed; 
+    [SerializeField] protected int _stopDist = 10;
+    public virtual int stopDist => _stopDist;
 
     [SerializeField] protected int _sightDist = 10;
     public virtual int sightDist => _sightDist; 
-    [SerializeField] protected int _rotateSpeed = 1;
-    public virtual int rotateSpeed => _rotateSpeed; 
+    [SerializeField] protected float _maxNavDist = 2f;
+    public virtual float maxNavDist => _maxNavDist; 
 
+
+    // Enemy Tracking Variables
+    private Vector3 navTargetPosition;
+    private bool hasSetDestination;
     
     
 
@@ -44,8 +57,8 @@ public class EnemyFSM : StateMachine
     // Sets up the states with proper connections to possible states
      protected virtual void Awake()
     {
-        enemyBlackboard = new EnemyBlackboard();
-        enemyBlackboard.SetEnemyFSM(this);  
+        EnemyBlackboard enemyBlackboard = universalEnemyBlackboard.enemyBlackboard;
+        enemyBlackboard.SetEnemyFSM(this);
 
         Init(
             (StateId.Disabled, new DisabledState(null, this)),
@@ -60,6 +73,12 @@ public class EnemyFSM : StateMachine
         collisionSightMask = -1;
 
         hp.OnDeath += OnDeath;
+
+        // set variables for nav agent
+        navAgent.angularSpeed = rotateSpeed;
+        navAgent.speed = maxSpeed;
+        navAgent.acceleration = maxAccel;
+        navAgent.stoppingDistance = stopDist;
 
     }
 
@@ -96,8 +115,101 @@ public class EnemyFSM : StateMachine
         }
     }
 
+    /*public Vector2Int GetCurrentRoom()
+    {
+        EnemyBlackboard enemyBlackboard = universalEnemyBlackboard.enemyBlackboard;
+        Vector2 position = new Vector2(transform.position.x, transform.position.z);
+        Vector2Int gridPos = new Vector2Int((int)(position.x / enemyBlackboard.GetRoomSize()), (int) (position.y / enemyBlackboard.GetRoomSize()));
+        
+        return gridPos;
+    }*/
+
     public Vector2Int GetCurrentRoom()
     {
-        return new Vector2Int(0, 0);
+        EnemyBlackboard enemyBlackboard = universalEnemyBlackboard.enemyBlackboard;
+        float roomSize = enemyBlackboard.GetRoomSize();
+        
+        // Assuming your grid origin is stored as a Vector2 or Vector3 (X and Z)
+        Vector2 gridOrigin = GameManager.Instance.bottomLeftCornerGridPosition;
+
+        // Subtract the origin to get the local position relative to the bottom-left corner
+        float localX = transform.position.x - gridOrigin.x;
+        float localZ = transform.position.z - gridOrigin.y; // Use .y if origin is Vector2, or .z if Vector3
+
+        //room size and floor to get index
+        int gridX = Mathf.FloorToInt(localX / roomSize);
+        int gridZ = Mathf.FloorToInt(localZ / roomSize);
+        
+        return new Vector2Int(gridX, gridZ);
+    }
+
+    public Status SetTargetPosition(Vector3 newTargetPos)
+    {
+        Vector3 newPos = Vector3.zero;
+        // Checks if we should get a new target position
+        if (!hasSetDestination)
+        {
+            if (GeneralActions.FindValidPosition(universalEnemyBlackboard.enemyBlackboard, newTargetPos, out newPos, out NavMeshPath navPath))
+            {
+                navAgent.SetDestination(newPos);
+                this.path = navPath;
+                hasSetDestination = true;
+                navTargetPosition = newTargetPos;
+            }
+            else 
+            {
+                return Status.BH_FAILURE;
+            }
+        }
+        else
+        {
+            if (Vector3.Distance(navTargetPosition, newTargetPos) > 0.1f)
+            {
+                if (GeneralActions.FindValidPosition(universalEnemyBlackboard.enemyBlackboard, newTargetPos, out newPos, out NavMeshPath navPath))
+                {
+                    navAgent.SetDestination(newPos);
+                    this.path = navPath;
+                    hasSetDestination = true;
+                    navTargetPosition = newTargetPos;
+                }
+                else return Status.BH_FAILURE;
+            }
+        }
+
+        // check if we are there yet, incase we want to remove current target position
+        if (!navAgent.pathPending && navAgent.remainingDistance <= navAgent.stoppingDistance)
+        {
+            DisableNavAgent();
+            return Status.BH_SUCCESS;
+        }
+
+        // if everything passes, we need to go to the location
+        Vector3 desiredVelocity = navAgent.desiredVelocity;
+
+        if (desiredVelocity.sqrMagnitude > 0.01f)
+        {
+            // might move this to acceleration - chris
+            Vector3 targetVelocity = desiredVelocity;
+            sourceRB.linearVelocity = Vector3.MoveTowards(sourceRB.linearVelocity, targetVelocity, maxAccel * Time.fixedDeltaTime);
+        }
+        navAgent.nextPosition = sourceRB.position;
+        
+        return Status.BH_SUCCESS; // could be running, for now im doing success
+
+    }
+
+    public Vector3 GetNavTargetPosition()
+    {
+        return navTargetPosition;
+    }
+    public void EnableNavAgent()
+    {
+        navAgent.updatePosition = true;
+    }
+
+    public void DisableNavAgent()
+    {
+        hasSetDestination = false;
+        navAgent.updatePosition = false;
     }
 }

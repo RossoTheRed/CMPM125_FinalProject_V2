@@ -58,6 +58,9 @@ public class LayoutGenerator : MonoBehaviour
 
         modelPlacementManager.AnalyzeLayout(grid, gridWidth, gridHeight);
         modelPlacementManager.PlaceRooms(grid, gridWidth, gridHeight);
+        Debug.Log(EventBus.Instance.GetHashCode());
+        EventBus.Instance.DoProceduralDone();
+        Debug.Log("Done Procedural Generation Layout");
     }
 
     //Initializes grid to build layout off of. Uses gridWidth/gridHeight to generate size

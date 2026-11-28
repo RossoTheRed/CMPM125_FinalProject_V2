@@ -9,6 +9,11 @@ public class HaltAcceleration : ActionNode
         this.enemyBlackboard = enemyBlackboard;
         m_eTickType = TickType.BH_BOTH;
     }
+
+    public sealed override void OnInitialize()
+    {
+        enemyBlackboard.enemyFSM.DisableNavAgent();
+    }
     
     sealed protected override Status Update() 
     {

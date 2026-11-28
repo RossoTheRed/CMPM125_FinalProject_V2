@@ -11,7 +11,13 @@ public class NavToLocation : ActionNode
         this.enemyBlackboard = enemyBlackboard;
         m_eTickType = TickType.BH_BOTH;
     }
-    
+
+    public sealed override void OnInitialize()
+    {
+        enemyBlackboard.enemyFSM.EnableNavAgent();
+
+    }
+
     sealed protected override Status Update() 
     {
         // because there is a fixed update, it should go and commit those actions
@@ -20,7 +26,17 @@ public class NavToLocation : ActionNode
 
     sealed protected override Status FixedUpdate()
     {
-        
+        GeneralActions.RotateTowardsDir(enemyBlackboard.enemyFSM.sourceRB, enemyBlackboard.enemyFSM.rotateSpeed);
+        Status status = enemyBlackboard.enemyFSM.SetTargetPosition(enemyBlackboard.enemyFSM.GetNavTargetPosition());
+        // set target position must be run, right now it just runs its own
+        // current target position, waiting for something to update it
+
+
+        // will always return success
+        return Status.BH_SUCCESS;
+    }
+    private Status OldUpdate()
+    {
         GeneralActions.RotateTowards(enemyBlackboard.enemyFSM.sourceRB, enemyBlackboard.enemyFSM.target.transform, enemyBlackboard.enemyFSM.rotateSpeed);
         Vector3 finalLocation = Vector3.zero;
         

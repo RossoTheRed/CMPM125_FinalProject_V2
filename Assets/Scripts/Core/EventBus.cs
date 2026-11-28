@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 public class EventBus
 {
     private static EventBus _instance;
@@ -20,6 +21,7 @@ public class EventBus
         GameStart,
         GamePause,
         GameOver,
+        ProceduralDone,
     }
 
     // DoMainMenu when moving to main menu
@@ -35,6 +37,16 @@ public class EventBus
     public event Action OnGameOver;
     public void DoGameOver() => OnGameOver?.Invoke();
 
+
+    // DoProceduralDone when procedural map gen is done
+    public event Action OnProceduralDone;
+    public void DoProceduralDone() {
+        Debug.Log("Procedural Invoked");
+        int listenerCount = OnProceduralDone?.GetInvocationList().Length ?? 0;
+    Debug.Log($"Firing ProceduralDone. Listeners attached: {listenerCount}");
+        OnProceduralDone?.Invoke();
+    }
+
     private readonly Dictionary<Action, Delegate> _activeEventListeners = new Dictionary<Action, Delegate>();  
     // note: I am testing a new format for the event bus
 
@@ -48,6 +60,7 @@ public class EventBus
             case EventName.GameStart: OnGameStart += wrapper; break;
             case EventName.GamePause: OnGamePause += wrapper; break;
             case EventName.GameOver: OnGameOver += wrapper; break;
+            case EventName.ProceduralDone: OnProceduralDone += wrapper; break;
             default: throw new Exception("Failed Register: Given eventName does not exist as a register - " + eventName);
         }
         
@@ -65,6 +78,7 @@ public class EventBus
                 case EventName.GameStart: OnGameStart -= (Action)wrapper; break;
                 case EventName.GamePause: OnGamePause -= (Action)wrapper; break;
                 case EventName.GameOver: OnGameOver -= (Action)wrapper; break;
+                case EventName.ProceduralDone: OnProceduralDone -= (Action)wrapper; break;
                 default: throw new Exception("Failed Deregister: Given eventName does not exist as a Deregister - " + eventName);
             }
             _activeEventListeners.Remove(listener);

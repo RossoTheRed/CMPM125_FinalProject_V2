@@ -32,6 +32,7 @@ public class RandomDFS : ActionNode
         newPos.y *= enemyBlackboard.GetRoomSize();
         newPos = new Vector3(GameManager.Instance.bottomLeftCornerGridPosition.x + newPos.x, GameManager.Instance.bottomLeftCornerGridPosition.y + newPos.y, GameManager.Instance.bottomLeftCornerGridPosition.z);
         enemyBlackboard.SetPredictedRoom(newPos, newGridPos);
+        Debug.Log($"RandomDFS New Pos: {newPos} & {newGridPos}");
         Status status = Status.BH_SUCCESS;
         if (newPos == Vector3.zero) status = Status.BH_FAILURE;
         Debug.Log($"Nav Status: {status}");
@@ -45,6 +46,7 @@ public class RandomDFS : ActionNode
         int rowSize = enemyBlackboard.gridData.gridArray.GetLength(1); // height
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
         Vector2Int currGridPos = enemyBlackboard.enemyFSM.GetCurrentRoom();
+        Debug.Log($"Current Room Grid Pos: {currGridPos}");
         List<Vector2Int> directions = new List<Vector2Int>
         {
             new Vector2Int(1, 0),
@@ -74,7 +76,7 @@ public class RandomDFS : ActionNode
                 newPos += currGridPos;
                 if (newPos.x >= 0 && newPos.x < rowSize && newPos.y >= 0 && newPos.y < colSize && !visited.Contains(newPos)) 
                 {
-                    if (enemyBlackboard.gridData.gridArray[newPos.x, newPos.y] >= 1) 
+                    if (enemyBlackboard.gridData.gridArray[newPos.x, newPos.y].tileType == TileType.Empty) 
                     {
                         queueDFS.Enqueue(new Vector3Int(newPos.x, newPos.y, queuePos.z));
                         visited.Add(newPos);
@@ -90,7 +92,7 @@ public class RandomDFS : ActionNode
 
         }
         
-        return new Vector2Int(queuePos.x, queuePos.y)
+        return new Vector2Int(queuePos.x, queuePos.y);
     }
 
     private List<int> SetupPooledDirections()

@@ -18,6 +18,8 @@ public class PatrolBT : EnemyBaseBT
                 .Action(new NavToLocation(eBoard))
             .End()
             .Sequence() // pure wander random pathfind
+                .Condition(new PredictedRoomExist(eBoard))
+                .Action(new NavToPredictedRoom(eBoard))
             .End()
             .Sequence()
                 

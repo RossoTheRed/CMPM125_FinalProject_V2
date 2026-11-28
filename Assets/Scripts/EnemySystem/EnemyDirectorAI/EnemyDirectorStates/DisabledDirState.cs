@@ -1,10 +1,10 @@
 
 namespace EnemyDirectorStates {
 
-public class DisabledState : StateComponent<EnemyDirectorFSM>
+public class DisabledDirState : StateComponent<EnemyDirectorFSM>
 {
     private Behavior behaviorTreeRoot = null;
-    public DisabledState(Behavior root, EnemyDirectorFSM machine) : base(machine)
+    public DisabledDirState(Behavior root, EnemyDirectorFSM machine) : base(machine)
     {
         Initialize(root);
     }
